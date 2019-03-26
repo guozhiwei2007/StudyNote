@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="200px"
+            android:background="#578"
+            android:gravity="center"
+            android:text="Hello World!"
+            />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="100px"
+            android:background="#296"
+            android:gravity="center"
+            android:text="menu"
+            />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="sdfsfsf\nerr\nsfs\nrrr\nrr\nerrere\nujjkk\nserrtt\niiee\nereoo\nijje\neerr\jiejf\nnerr\nerr\ner\nr\nerrere\nujjkk\nserrtt\niier\nerrere\nujjkk\nserrtt\niie"
+                android:textSize="30sp"/>
+        </ScrollView>
+    </LinearLayout>
+</ScrollView>

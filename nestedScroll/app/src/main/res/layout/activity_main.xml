@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.xin.nestedscroll.view.MyNestedScrollParent
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="400px"
+        android:background="#578"
+        android:gravity="center"
+        android:text="Hello World!"
+        android:textColor="#fff"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="200px"
+        android:background="#296"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="菜单1"
+            android:textColor="#fff"
+            />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="菜单2"
+            android:textColor="#fff"
+            />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="菜单3"
+            android:textColor="#fff"
+            />
+    </LinearLayout>
+
+    <com.xin.nestedscroll.view.MyNestedScrollChild
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/tv_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="30sp"/>
+    </com.xin.nestedscroll.view.MyNestedScrollChild>
+
+</com.xin.nestedscroll.view.MyNestedScrollParent>
