@@ -1,0 +1,463 @@
+android知识点总结：
+
+concurrenthashmap、 hashmap、hashtable 的区别？
+
+hashmap是非线程安全的，
+hashtable是线程安全的， 而且并行操作比较小，同时只能有一个写操作，
+concurrenthashmap是线程安全的， 它采用的是锁分段机制， 而且一个表有16个桶， 同时可以有16个线程同时操作；
+
+hashmap有个扩容因子， 默认是0.75， 当数量达到总数量＊扩容因子的时候，就会触发rehashing（重新扩容）。
+
+要想提高查询效率，就要把扩容因子设置小点；
+要想提高空间利用率， 就要把扩容因子设置大点；
+
+
+object类的常见的方法都有哪些？
+tostring（）、hashcode（）、equals（）等方法
+finalize（）、clone（）、 wait（）、 notify（）、notifyall（）方法
+
+linkedhashmap是hashmap和linkedlist的组合，是一个有序的hashmap，
+应用场景就是LRU(最近最少使用)缓冲算法。
+
+
+android最常见的设计模式都有哪些，其特点是什么？
+
+1、单例模式
+懒汉模式和饿汉模式
+2、builder模式
+主要是为了提高代码的可读性，
+builder.age(32).name(“hack”).build();
+3、观察者模式，是一种一对多的关系。 
+RecycleView.addOnScrollListener()
+Broadcast (register  unregister  senibroadcast )
+EventBus   ()
+RxJava  
+4、原型模式  通过拷贝对象来构造对象
+OkHttpClient实现了Cloneable的clone方法
+
+5、策略模式
+属性动画设置差值器
+Volley源码中有一个RetryPolicy重试策略，就是用的策略模式。
+
+6、工厂模式
+策略模式和工厂模式类似， 一个关注行为（策略模式）， 一个关注对象（工厂模式）
+
+7、代理模式（静态、动态）
+mediapler源码中mediaplayerproxy就是对AwsenPlayer的应用
+
+8、状态模式
+蓝牙源码中用到的设计模式
+
+9、ioc模式（控制反转模式）
+di依赖注入
+构造函数注入、属性注入和接口注入
+
+
+
+二、android使用控件时候有哪些坑？
+1、AsyncTask的队列中好像最多可以存储128条数据，超过了就会被废弃掉；
+2、fragment中调用getactivity返回值可能会是空
+3、包重复依赖的问题，解决方案如下（通过exclude group的方式）：
+
+implementation 'com.github.ifmvo:Matthew_ImageLoader:1.1.3'
+implementation ('com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.43-alpha1'){
+    exclude group: 'com.android.support', module: 'support-annotations'
+}
+4、target升级时，权限问题， 当app打开后， 退到后台， 然后把权限关闭，app再次起来时， app崩溃的问题。
+解决方案：在baseactivity的increase方法中判断如果是从后台起来的， 判断有没有权限， 没有，
+第三方sdk升级
+
+5、EasyPermission库的问题
+集成的时候，默认没有权限的情况下，有个默认的弹框出现
+
+6、列表页加载动画时候，内存不够崩溃的问题
+解决方案：通过okhttp的setskipmemorycache(true).override(width,height)。
+SimpleTarget来监听图片下载进度， 下完了就保存下来。
+SparseArray来保存获取的drawable图片
+什么时候用sparsearray，什么时候用hashmap？
+数据量在千位以下时，用sparsarray， 上万后就要用hashmap了。
+
+7、listview的setonitemclicklistener没有触发回调的问题
+解决方案： 通过传入callback， 设置button的setonclicklistener方法， 然后调用callback的回传回来
+
+8、fragment欠套3个fragment时，嵌套的fragment有时会莫名其妙不显示的问题
+
+
+9、recycleview嵌套listview，listview显示不全的问题
+需要重写listview的onmeasure方法
+
+10、h5页面滑动卡顿的问题
+解决方案：把硬件加速打开，属性如下：android:hardwareAccelerated="true"
+
+10、service在app处于后台的情况下，无法启动app的问题
+解决方案：把service换成job-service
+jobservice和jobScheduler
+
+
+11、alarmmanager最重要的特性就是在手机休眠的情况下可以唤醒apu继续工作
+
+12、handler相关的消息：
+https://www.cnblogs.com/xgjblog/p/5258947.html
+looper中的messagequeue是用时间来排序的。 时间为当前时间＋延时
+
+
+13、binder机理
+涉及server、client、servicemanager  、binder驱动
+servicemanager相当于是dns， binder驱动相当于是路由器， server为client提供服务， 但是相对servicemanager来说是客户端。 
+servicemanager的binder通过0号引用获取，这样就导致所有的server都能访问到servicemanger。 server首先向servicemanager注册（key－value键值对，名称和binder对象）， 这样servicemanger中就有了该server的binder引用。 client通过名称在servicemanager 中获取到server的binder应用， 然后就可以获取server的服务了。 
+
+
+binder相较传统的ipc机制来说，有哪些优势？
+性能更好、和更安全
+调用方式不同、注册方式也不同；
+一个是通过getsystemserver
+另一个是通过serverconnection传递一个binder代理对象， 而在onConnected中才可以进行的；
+
+应用级别的server是没有办法注册到servicemanager中的，必须是系统级别的server才可以注册到servicemanager中；
+
+sparseArray特点：
+1、更节省内存， 存储的数据已经做了排序；
+2、key值只能是int；
+
+vivo push埋点点击比到达数据量高
+原因：vivo推送后， 首条离线消息，客户端点击没有反应的问题。后来发现是被系统的智慧云给拦截掉了。 后来通过商务谈判添加白名单的方式解决。
+
+三、趣味杂谈
+如何让handler发送的消息发送到自己定义的Thread中？
+把自己线程的looper对象发送给相应的handler即可。通过调用，非主线程默认是没有启动looper的。
+looper.prepare();
+new Handler(looper.mylooper());
+looper.loop();
+
+
+四、二手车项目架构升级：
+1、刚开始时，用的是xutils架构
+dbutuils、 viewutils、 bitmaputils 和 
+后来被逐渐抛弃
+数据库目前已经升级成room（google 给android量身打造的orm框架数据库）
+
+什么是orm框架数据库？
+就是将对象和表做了关联， 不需要手动创建表，减少开发成本，提升开发效率；
+
+
+五、城市选择页面处理逻辑
+1、首先先判断网络是否畅通， 如果畅通， 先取出网络数据， 回来刷新页面， 并更新本地缓冲（数据库）；
+如果不畅通， 则先取出缓冲数据， 如果有缓冲，取出缓冲数据刷新页面， 如果没有， 则取出本地assert中json文件数据；
+
+
+http返回码总结：
+200:成功
+206:服务器成功返回了部分内容
+304:自从上次请求过后， 数据在没有更新，http_not_modify
+503:服务器超时；
+504:网关超时
+404 not found
+
+
+
+hashmap相关疑点问题总结：
+hashmap中hash碰撞产生的根本原因是什么？难道仅仅是大家所说的hash值相同吗？hash值不同就不会产生hash碰撞？
+  根据key的hash值算出来的索引相同，位于同一链表上的数据他们的hash值的后n位相同（如果hashmap的长度为2的n次方）
+位于同一链表数据的hash值有什么相同点？
+  位于同一链表的数据的后n位相同
+发生hash碰撞的时候我们放入的新数据是位于链表头部还是尾部？
+  是从头部插入的，代码如下：
+void addEntry(int hash, K key, V value, int bucketIndex) {
+    Entry<K,V> e = table[bucketIndex];
+    table[bucketIndex] = new Entry<K,V>(hash, key, value, e);
+    if (size++ >= threshold)
+        resize(2 * table.length);
+}
+
+扩容的时候原数据到底是怎么重新放入新数组中的？难道还要挨个计算一下位置？如果不是，那么是通过什么方式来判断之前位于同一链表的数据是否还在同一链表？
+  e.hash & (oldcapacity-1)  等价于 j | highBit
+
+ 推理如下：
+ j | highBit
+  = j | (e.hash & oldCapacity) 第一步
+  = (e.hash & (oldCapacity-1)) | (e.hash & oldCapacity) 第二步
+  = e.hash & ( (oldCapacity-1) | oldCapacity) 第三步
+  = e.hash & (newCapacity- 1) 第四步
+
+
+单里模式的创建有两种模式，懒汉模式和饿汉模式
+懒汉模式：等用到的时候才去常见实力对象；
+饿汉模式：类加载的时候就去创建，天生线程安全。已空间换取时间。
+
+
+sharepreference特点：
+跨进程不安全、读取慢、全量写入、卡顿（系统广播、或者onpause时落地到磁盘）
+
+优化：微信开源的MMKV
+
+
+contentprovider特点：
+跨进程安全、适合大数据传输（里面用到了匿名共享内存和binder，binder传输的只是共享内存文件描述符）、 当数据比较小时， 使用共享内存可能就没那么划算了， 它里面有个call函数， 通过binder来传输数据
+
+序列化：
+对象序列化
+serializable
+性能较差（用到了大量的反射和递归调用）
+parcelable
+只会在内存中进行序列化，不需要通过反射进行序列化和反序列化。并不会存储到磁盘，性能要好， 
+版本兼容问题
+数据前后兼容性（数据顺序和类型变化）
+serial
+twitter开源库，结合了serializable和parcelabale两者的优点
+序列化时间、反序列化时间、文件大小都要优
+
+数据序列化
+json
+protocol buffers
+flat buffer
+
+数据库
+realm、 levelDB、 WCDB
+ORM框架(用面向对象的概念把表和对象关联起来)
+greenDAO、 Room
+
+优化索引：
+
+
+数据库损坏的原因：
+空间内存不足，数据设置生命周期为多少天， 超过天数后自动进行删除操作，如微信的聊天记录中的图片。 为了防止写操作时候内存不足的问题，可以提前预留足够的空间。每次空间倍数增长
+系统突然断电（解决方案时写操作落地到磁盘，而非操作）
+文件sync同步失败（master表做主从备份， 为了防止主从表都被破坏，可以做双重备份，每次sync时，取老的备份表或则是损坏的表做备份）
+
+
+内存优化的策略：
+设备划分等级
+bitmap优化
+防止内存泄漏
+
+sqlite数据库都有哪些锁？
+SHARE(共享)  RESERVE（保留） PENDING（未决） EXCLUSIVE（排他）
+多个读操作都可以同时拥有共享锁；
+需要写操作时首先要获取 保留锁，可以开始数据库写入操作， 但是此时只能在内存中操作，不能入库，与此同时别的线程想要读数据库是可以的， 等需要入库的时候， 把锁升级成未决锁， 此时不能的新的读操作， 原有未读的操作可以继续操作。等所有读操作完成之后， 未决锁就可以升级成排他锁。此时开始入库操作。 别的线程既读、写操作均不可以执行了。
+
+react native优化总结：
+1、列表采用Flatlist，效率比listview更高效；
+2、在componentshouldmount生命周期函数中判断数据有没有变化，有的话，才进行页面的刷新操作；
+3、RN主要的性能瓶颈在javascript的执行，js也是比较耗时，
+4、js bundle进行拆分，分为框架bundle和业务bundle；
+5、react native单实例共享；
+6、jsmodule单实例加载后， 不要在重复加载；
+7、app启动后，预加载rn实例；
+8、框架兼容层，统一规则， 以便后续框架升级后还需要更改业务层方面的东西；
+
+什么是jsx？
+jsx是javascript语言的一种扩展，react native利用它来描述用户界面；
+
+
+rtsp协议：（adobo公司的产品）
+它包括OPTIONS、DESCRIBE、SETUP、 TEARDOWN、 PLAY等请求；
+
+hls协议：
+http:主要是负责数据的传输；
+m3u8:主要是相关的索引信息， 包括一级m3u8文件和二级m3u8文件。其中一级中包括对应的多路流媒体信息， 二级中包括对应的流中包括多少个ts视频流信息；
+ts对应的视频流地址
+
+react－native学习心得
+
+1）、left，right，top，bottom必须在绝对布局中才能使用， 且在项目中尽量少用绝对布局。 在做类似弹框那种的时候可以使用；
+2）、如果父布局使用flexDirection:’row’的时候，子布局必须给设置width，否则子布局不会显示出来；
+3）、做一个左对齐， 右对齐的布局
+    <View flexDirection;’row’>
+        <View width;20 height: 20 backgroundColor:’#987654’>
+        <View width;20 height: 20 backgroundColor:’#987654’ flex:1>
+        <View width;20 height: 20 backgroundColor:’#987654'>
+    </View>
+
+4）、flexDirection指定的方向为主轴， 与主轴垂直的方向就是次轴。
+     alignItems控制子元素在次轴方向的布局， justifyContent控制子元素在主轴方向上的布局。
+5）、如果父布局使用alignItems布局，子元素使用了alignSelf布局， 则父布局的alignItems属性对子元素没有作用；
+
+
+WMRouter有哪些作用：
+1、通过uri方式借助wmrouter进行页面跳转；
+2、数据路由通过wmrouter的spi封装通过接口实现分离的方式实现；
+3、使用UriInterceptor进行协议拦截，然后实现跳转；
+
+volatile、transient关键字的作用：
+volatile修饰的字段在多线程访问中有独立的空间
+transient关键字修饰的字段不会被序列化， 比如敏感字段，如银行卡号和密码不在网络中传输。生命周期只会被写入内存中， 不会被写入磁盘中持久化；
+
+为什么要升级到target26？而不是别的？
+应用市场给在某天之前，target必须升级到26，否则可能面临被下架的风险；
+通过反射调用sdk的方法可能会被报错；
+
+
+target升级到26（0版本）对应的一些事？
+1）android8.0引入了通知渠道， 要为每种通知类型创建用户自定义的渠道；
+2）android8.0强化了权限管理，变得更加安全；
+3）android8.0粘性广播收不到的问题，改为动态注册即可解决这个问题；
+
+app签名文件都包含什么内容？
+appalias；
+apppassword；
+
+ThreadLocal类的作用：
+他就是为线程中的某个变量创建一个副本，相当于每个线程中都有这么一个变量，相当于是提高了性能，但是额外占用了空间。
+
+mvp的缺陷都有哪些？
+最明显的创建一个Activity需要配合创建多个接口类和实现类，每个操作都需要通过接口回调的方式进行，虽然逻辑清晰代码，同时也造成了类的增多和代码量的加大。
+ 
+解决方案：
+    利用泛型封装一下MVP的base类，通过泛型所提供的类型去实例化View层和Presenter层，在继承封装好的基类中快速的使用MVP模式。注意的是通过泛型约束后，在继承的时候需要填写多个泛型值。
+
+
+插件化学习总结：
+解决的问题如下：
+1、加载插件中的类：
+app安装后， 会在／data目录下生成安装的apk的信息。 他在内存中保存在了loadapk中。由于插件没有被安装， 所以无法加载加载插件中的类和资源。 而加载类用到了loadapk中的basedexclassloader， 有dexclassloader和patahclassloader两种。pathclassloader加载系统和主dex包中的类， dexclassloader加载剩余的dex文件。所以我们有两种方案：
+一种是声称插件的loadapk，通过反射把他放在系统mpackage对象中，但是loadapk中有很多东西比如applicationinfo，就是通过读取androidmanifest.xml来生成的。但是这样处理逻辑很复杂， 像360的droidplugin就是通过这种策略来实现的。
+另一种是通过生成插件中classloader对象，然后把他合并到主app的classloader中。然后就如下：
+basedexclassloader->dexpathlist->dexelements [Element]， 获取到插件中的dexelements，然后插入到dexpathlist中。
+
+2、启动插件中activity：
+首先我们新建一个占坑的activity，因为启动activity在ams中有个判断，启动的activity必须在android manifest.xml文件中声明过，否则会报activity未申明。 所以实现的思路是在检查前，把他替换成占坑activity， 然后等到真正创建时，再替换成原来的activity。思路如下：
+activity启动流程， ActivityManagerNative->gdefault.它实际上是ams的一个本地代理。我们只需要设置它就可以了。 完了之后，它会把消息放到activity什么
+
+handler下发消息的时候，先判断handler的mcallback是否为空， 如果不为空的话， 就会调用mcallback.handlemessage()方法。 mcallback本身是个handler类型。
+ActivityThread中有个H（handler） ，然后通过反射重写那个h的mcallback。即可。 在重写的时候
+
+管道pipe＋ epoll 结合， 通过epoll来监听管道的读端， 看看管道的写端有没有数据写入，如果有数据写入， 管道的读端就会被唤醒。
+
+3、加载插件中的资源
+resourcemanager－》 assertmanger－》addassertpath，，然后创建一个用assertmanager来创建resource。 所以我们的方法， 通过反射将我们的插件apk的路径调用addassertmanager方法插入到assertmanger中。
+
+现在主流的网络请求中为什么要用retrofit＋rxjava组合来进行请求的？
+因为rxjava可以做到随意切换线程；
+
+2、实现一个系统，上报程序的崩溃log？
+实现思路： 如何获取程序的崩溃log？
+每一种异常数据都能触发setUncaughtExceptionHandler，所以需要实现一个这种handler，然后set进去即可。 
+
+3、789123456这么一组数据（已经排好序的一个数组， 然后右移， 把移出来的数据放到最左边，相当于是一个循环数组），怎么实现一种查找算法，实现时间复杂度log(n)?
+实际上也是利用了二分查找算法。只是查找规律。采用的是递归思想实现。
+二分查找的算法核心思想是每做一次运算能够使得数据量减半。 能够命中哪块区域。仔细分析上述数据，经过折半分拆数据后，都能保证有一边的数据是已经排好序的数据。 这样就能判断所查找的数据落在哪块区域了。
+
+public int search(int []arr, int left, int right, int value) {
+  int middle = (left+right)/2;
+  if(left > right) return -1;//没有找到；
+  if(value == arr[middle]) return middle;
+
+  if(arr[middle] > arr[left]) { //左边是升序
+     if(value >= arr[left] && value <= arr[middle]) {
+       return search(arr, left, middle, value);
+     } else {
+       return search(arr, middle+1, right, value);
+     }
+  } else { //右边是升序
+    if(value >= arr[middle] && value <= arr[right]) {
+      return search(arr, middle, right, value);
+    } else {
+      return search(arr, left, middle-1, value);
+    }
+  }
+}
+
+数据类加密？比如密码的加密
+做双层加密， 先做一层md5不可逆的加密， 然后做一次可逆的加密。 传输的过程中就是传递的二次加密后的数据， 服务端拿到二次加密后的数据， 再做一次解密，然后把解密后的数据保存到数据库。 这样在传输过程中即使数据被破解，也拿不到用户的密码。因为他是经过不可逆加密后的密文。
+一般使用的可逆加密算法有对称加密和非对称加密。
+
+数据加密，一般情况下， 对数据和密文一起做加密算法， 服务端拿到后，通过相同密钥的逆序排序算法进行解密，才能拿到明文。
+
+常见的异常都有哪些？
+NullPointException, ClassNotFoundException, ClassCaseException,  ArrayOutOfIndexException,  UnkownException, SecurityException,  算术异常（0作为被除数）等。
+
+
+android7.0开启照相功能崩溃的问题？
+原来Android7.0系统开始，直接使用本地真实路径的uri被认为是不安全的，会抛出FileUriExposedException异常，在郭霖老师的第一行代码中提到了用FileProvider来解决这个问题。 
+
+
+target从23升级到26需要处理的事情？
+1、广播接收不到的问题；
+     需要动态注册，不能采用在androidmanifest中注册的方式；
+     主要涉及三个广播， 网络状态切换广播、拍照广播和录像广播
+2、通知显示不出来的问题；
+     需要添加渠道；
+3、8.0手机上安装失败的问题；
+     需要添加权限 
+     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+4、android7.0获取以content开头的文件拿不到正确路径的问题；
+5、sharepreference中不能使用MODE_WORLD_READABLE\  MODE_WORLD_WRITEABLE,被认为是不安全的；
+
+share preference中apply是把数据写道内存中，commit是把内存中的数据写道磁盘中；
+
+
+java反射小结
+class里面有属性filed域，方法method域；
+反射可以修改类里面的属性和方法，但是不可以基本类型的常量值。因为编译器在生成class文件的时候做过优化， 已经变后面使用常量的地方优化成了常量。所以即使你修改了需改了常量本身， 但是在使用的时候， 但是在代码使用中还是原来的常量。
+你也可以这么想，反射肯定可以修改常量的值，但是修改后的值是否会有意义？？？不见得。
+
+android系统进程都有哪些？
+init进程 init。rc中配置
+zygote进程、systemserver进程、mediaserver进程
+
+悬浮窗口SYSTEM_ALERT_WINDOW 权限没有办法使用代码来申请， android6.0的时候，需要你先判断是不是已经开启这个权限， 如果没有开启， 则发送action挑战到settting页面打开该权限。 在onactivityresult中接收结果。
+
+javaVM,  JniEnv作为实现多类的结合体；
+
+快速排序算法如下：
+void quickSort(int a[], int low, int high) {
+  int start = low;
+  int end = high;
+  int key = a[start];
+
+  if(low >= high) return;
+
+  while(start != end) {
+    while(start < end && a[end] >= key) {
+      end--;
+    }
+
+    if(start < end) {
+      a[start] = a[end];
+    }
+
+    while(start < end && a[start] <= key ) {
+      start++;
+    }
+
+    if(start < end) {
+      a[end] = a[start];
+    }
+  }
+
+  a[start] = key;
+  quickSort(a, low, start-1); //前半部分进行排序
+  quickSort(a, start+1, high); //后半部分进行排序
+}
+
+int main(int argc, char **argv) {
+  int a[] = {4,3,6,8,1,2,9,6,5,2};
+  quickSort(a,0,9);
+
+  for(int i = 0; i < 9; i++) {
+    printf("%d\n", a[i]);
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
