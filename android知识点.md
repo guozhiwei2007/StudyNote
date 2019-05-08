@@ -441,9 +441,47 @@ int main(int argc, char **argv) {
 }
 
 
+性能监控小程序：Emmagee
+地址：https://blog.csdn.net/u011159607/article/details/78143808
 
+懒汉式实现单例类
 
+public final Singleton {
+    private static class SingletonHolder {
+        public final Singleton = new Singleton();
+    }
+    public static Singleton getInstance() {
+        return SingletonHolder.singleton;
+    }
+}
 
+public final Singleton{ ／／final为了让这个类不能被继承，防止集成类修改singleton
+    private static singleton = null;
+    private Singleton { ／／构造函数设置成private类型， 让外部不能调用构造函数产生实体类，只能通过调用getInstance方法来实现一个构造函数；；
+
+    }
+    public static Singleton getIns() {
+        if(null == singleton) {
+            Synchronized(Singleton.class) {
+                if(null == singleton) {
+                    singleton = new Singleton(); ／／构造函数本身是需要耗时的，
+                }
+            }
+        }
+        return singleton;
+    }
+}
+
+饿汉式实现，天生线程安全
+public final Singleton {
+    private static final Singleton mIns = new Singleton();
+    private Singleton() {}
+    public static Singleton getIns() {
+        return mIns;
+    }
+}
+
+子线程拥有主线程的资源， 除此之外， 子线程还有自己的堆栈区域， 在子线程内部创建的一些全局变量是私有的， 主线程是没有办法访问到的。 
 
 
 
