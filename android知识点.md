@@ -456,7 +456,7 @@ public final Singleton {
 }
 
 public final Singleton{ ／／final为了让这个类不能被继承，防止集成类修改singleton
-    private static singleton = null;
+    private volatile static singleton = null;
     private Singleton { ／／构造函数设置成private类型， 让外部不能调用构造函数产生实体类，只能通过调用getInstance方法来实现一个构造函数；；
 
     }
@@ -471,6 +471,14 @@ public final Singleton{ ／／final为了让这个类不能被继承，防止集
         return singleton;
     }
 }
+
+//加入volatile就是为了防止重排序，一个对象的创建过程包括如下几个步骤：
+1.分配对象的内存空间
+2.初始化对象
+3.设置instance指向刚分配的内存地址
+当instance指向分配地址时，instance不为空
+但是，2、3部之间，可能会被重排序，造成创建对象顺序变为1-3-2.所以需要加入volatile关键字防止重排序
+
 
 饿汉式实现，天生线程安全
 public final Singleton {
