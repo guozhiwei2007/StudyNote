@@ -447,6 +447,7 @@ int main(int argc, char **argv) {
 懒汉式实现单例类
 
 public final Singleton {
+    private Singleton {}
     private static class SingletonHolder {
         public final Singleton = new Singleton();
     }
@@ -512,16 +513,81 @@ public final Singleton {
 
 求取中位数实现思路， 先把数据分成两等份，实例化两个堆，一个大顶堆，一个小顶堆，小顶堆的数据都要大于大顶堆中数据， 此时中位数就是大顶堆或小顶堆中的堆顶数据。 然后当新增数据后， 把新增的数据移动到大顶堆或小顶堆， 然后再把数据做转移， 保证大小堆中的数据相等，或大顶堆中的数据比小顶堆中的数据＋1即可。然后就获取到了中位数。
 
+插件话问题总结：
+解决的问题，类的加载，资源的加载
+类的加载： 新建一个插件apkclassloader， 取出其中的dexelements， 然后通过hook技术取出宿主程序的classloader中的dexelements文件，然后新建一个新的dexelement， 把插件和宿主程序的dexelements合并进去。 通过反射setfeild来来设置pathdexlist。这样宿主程序就可以访问插件中的类文件了。 
+
+如何解决插件中的activity的调用问题呢？ 创建一饿站桩activity， 再ams检验之前，  把插件中的activity设置成站桩activity，同时保留插件activity的信息，在ams检查之后，再把插件activity替换出来。 那这么样实现替换工作呢？
+
+在启动activity的时候， 要先向ams作报告， 通过ams的本地代理对象实际上是ActivityManagerNative.gphote对象， 他是一个代理对象， 通过动态代理技术重新设置这个代理对象。在invocationhandler中做调包工作。 然后sms会通过ActivityThread创建主线程looper，并启动looper循环。 ActivityThread会向自己的内部类Hhander中发送消息。 我们通过hook，来设置h hander的mcallback对象， 来还原插件activity的请求的。 这样我们的插件actiivty就能够正常启动了。  
+
+如何识别启动的activity是插件activity，通过在intent中插件key值来标识。
+
+如何加载插件中资源呢？ 通过查看源码， 他是在contextimpl类的初始化的， 通过ResourceManager, AssertManager, 通过调用assertmanager中的addassertpath来初始化resource对象。 所以我们需要新建一个assermanger对象， 通过它来获取插件中的resource资源。 这样我们在宿主程序中提供接口， 来获取插件中的resource资源。 插件中就能正常获取插件的resource资源了。 
+
+anr是如何产生的？
+server超时、 broadcast广播超时、 contentprovider超时。  ui事件分发消息超时。  因为所有所以都是在主线程中处理的。 而每一条消息，必须在指定时间内处理完毕， 否则酒会出发appnotresponse函数， 弹出anr弹框。
 
 
+ui事件传递：
+事件分发、事件拦截和事件处理
+事件分发是通过dispacherevent处理
+事件拦截是通过onintercept处理，事件拦截只有viewgrounp类才有， view和activity都没有。 
+事件处理是通过ontouchevent处理
+
+其中viewgroup的dispacherevent中会先调用onintercept函数判断事件是否被拦截， 如果拦截， 则event不继续往下传， 调用他的ontouchevent来处理消息；
+然而view的dispatherevent直接就调用了view的ontouchevent中去了。
+
+先说view没有调用setonclicklistener函数，touch有MotionEvent_down  MotionEvent_move  MotionEvent_up， 如果down时间返回true， 才会执行move和up。 如果down返回了false，则消息继续往上传递。
+
+如果view设置了setonclicklister函数， down返回了true， move和up都会执行。 但是onclick不会被执行。 如果down返回了false， 则move和up和onclick都会被执行。
+
+静态广播和动态广播：
+动态广播的优先级要比静态广播的优先级要搞， 肯定是动态广播先执行。 
 
 
+项目中都做了哪些优化？
+1、 启动页做了优化， 延时加载， 就是通过这个idlehandler来实现的， 通过返回值等于false表示只执行一次， 返回true就表示可以无限次数的执行；
+2、 首页数据做了缓冲，本地file和sp缓冲；
+3、 详情页做了预加载；
+4、 详情页做了接口拆分，领先借口和别的接口；
+5、 页面无网和无数据默认图做了统一的sdk来处理；支持actiivty和fragment；
+6、 数据埋点做了优化，加了缓冲埋点， 减少网络请求次数；
+7、 title栏做了统一， 所有页面用同一个view；
+8、 push推送做了统一处理， 外层统一封装一层借口， 使得外部调用统一；
+9、 组件化架构升级， 降低藕合度。 模块间跳转以及数据获取通过接口来实现； 定义一个单例类， 通过hashmap来保存所有的接口和实现类， 而在每个moudle中把这个单例类传进去， 这样所有的模块就都可以访问到这些实现以及他们的接口方法了；
+10、通过加入aspectj 面向切面编程技术解决类似登陆相关的问题； 在连接点函数before之前加入函数判断来说明函数的解析；
+11、通过加入idlehandler函数做一些延时操作；
+12、dplink制定统一的协议， 来解析web请求；
 
 
+http和https的区别：
+http是基于udp传输的， 是一种无状态的连接；
+https是http＋ ssl协议， ssl底层是基于tcp／ip的， 做了数据封装、 压缩和解密的功能。 使用https要向ca申请证书。 而且要进行ssl握手操作，  所以耗时比较长。
+
+ssl协议有两层， 一层使ssl记录协议， 是建立在tcp协议基础上，做数据的压缩和加密和解密工作。 一层时ssl握手协议，主要是在通讯之前， 对双方身份进行认证， 以及协商加密算法和交换加密密钥。
+
+1、https要向ca申请证书
+2、网络请求端口不一样， 一个是80，一个是443
+3、http是超文本传输协议，传输的是明文， 而https是具有安全性的ssl加密传输协议；
+4、https握手阶段比较耗时， 所以加载比较长；
+
+ssl是如何保证数据的传输安全的？
+1、客户端向服务器发出ssl连接请求；
+2、服务端会把公钥发给客户端， 并保留了唯一的私钥在服务器端， 客户端用公钥对双方通信的对称密钥进行加密， 并发给服务端；
+3、服务端用唯一的私钥对客户端发来的对称密钥进行解密；
+4、在传输过程中， 服务端和客户端用共有的对称密钥进行加密和解密；
 
 
+步骤更新，更全面：
+1、首先客户端想服务器发起申请ssl公钥的请求；
+2、服务端会返回ssl的公钥，以及让经过ca证书的密钥加密过的公钥密文；
+3、客户端收到数据后，用本地ca证书的公钥进行解密， 和传递过来的ssl公钥进行比对，是不是一样（实际比对用的是他的hash值，这样效率会更高），主要做身份认证；
+4、身份认证通过后， 客户端在本地生成一个对称密钥， 然后拿这个公钥进行加密， 传递给服务端；
+5、服务端接收到加密密文后， 用私钥进行解密， 获得对称密钥；
+6、以后服务端和客户端进行数据传输时， 都是传递的对称密钥加密后的数据， 因为彼此都有对称密钥，都可以对其解密操作；
 
-
+上面第2步骤中的， 公钥密文， 是服务端向ca证书发动请求生成的， 身份证认证信息可以了。 
 
 
 
