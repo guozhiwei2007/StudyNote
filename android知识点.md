@@ -3,10 +3,10 @@ android知识点总结：
 concurrenthashmap、 hashmap、hashtable 的区别？
 
 hashmap是非线程安全的，
-hashtable是线程安全的， 而且并行操作比较小，同时只能有一个写操作，
+hashtable是线程安全的， 效率比较低下，同时只能有一个写操作，
 concurrenthashmap是线程安全的， 它采用的是锁分段机制， 而且一个表有16个桶， 同时可以有16个线程同时操作；
 
-hashmap有个扩容因子， 默认是0.75， 当数量达到总数量＊扩容因子的时候，就会触发rehashing（重新扩容）。
+hashmap有个扩容因子， 默认是0.75， 当数量达到总数量＊扩容因子的时候，就会触发rehashing（重新扩容）。 hashmap默认大小为8。
 
 要想提高查询效率，就要把扩容因子设置小点；
 要想提高空间利用率， 就要把扩容因子设置大点；
@@ -16,7 +16,7 @@ object类的常见的方法都有哪些？
 tostring（）、hashcode（）、equals（）等方法
 finalize（）、clone（）、 wait（）、 notify（）、notifyall（）方法
 
-linkedhashmap是hashmap和linkedlist的组合，是一个有序的hashmap，
+linkedhashmap是hashmap和linkedlist的组合，是一个有序的hashmap， 每一个entry对象中有三个指针， 一个指向它前面的节点， 一个指向它后面的节点， 一个指向当hash冲突时，链接的下一个节点
 应用场景就是LRU(最近最少使用)缓冲算法。
 
 
@@ -34,7 +34,7 @@ EventBus   ()
 RxJava  
 
 4、原型模式  通过拷贝对象来构造对象
-OkHttpClient实现了Cloneable的clone方法
+OkHttpClient实现了Cloneable的clone方法，如果不实现这个的话， 要对某个对象拷贝一份的话， 需要先new一个对象，然后挨个赋值操作
 
 5、策略模式
 属性动画设置差值器
@@ -635,7 +635,11 @@ AsyncTask在android23里面， 默认是串行执行的， 就是一个任务执
 一个asynctask任务被创建后， 只能执行一次任务。 如果启动asynctask， 当前task不是处于pending状态， 就会直接抛出异常。 默认只有三种状态， pending、 running和finish状态。
 一个asynctask被创建后， 只有等这个任务执行完毕了， 才会被销毁这个asynctask这个对象。 里面有个threadpoolexecutor对象， 管理者所有的asynctask对象。
 
-
+23种涉及模式：
+创建型：
+结构型：代理模式（对实体类做一些条件判断）， 桥接模式（比如底层有种三种数据库实现mysql， sqlite等）
+适配器模式， 装饰者模式（保留目标的对象， 处理前后持有该对象），  
+行为型： 
 
 
 
