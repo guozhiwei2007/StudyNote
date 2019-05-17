@@ -642,6 +642,28 @@ AsyncTask在android23里面， 默认是串行执行的， 就是一个任务执
 行为型： 
 
 
+target26升级出现的问题：
+悬浮窗升级后，不显示的问题， 默认类型是：TYPE_SYSTEM_ALERT， 修改成TYPE_APPLICATION_OVERLAY即可。  替换成dialog.getWindow().setType((WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY));
+
+
+any_rtc商业级的实时直播框架
+
+
+bindservice和startservice的区别：
+1、调用的生命周期方法不同；
+2、startservice启动的service， 必须调用stopservice才会退出，  而bindservice启动的service，退出有两种呢方案， 一种使unbindservice，一种是启动service的actiivty退出；
+
+有了thread，为什么还要用service呢？
+一般service里面会启动一个thread执行耗时操作， 这样的话， 方便管理这个线程，  在任何地方都可以调用stopservice来结束这个线程操作。
+
+ffplay的线程模型是什么？
+
+measure的四种测量模式都有什么？
+unspecified, 父容器对子容器大小没有限制，要多大给多大
+at_most：父容器限制了子容器的大小，最大为多少
+exactly：父容器明确知道子容器的大小， 确切值
+
+
 
 
 
