@@ -331,7 +331,7 @@ ActivityThread中有个H（handler） ，然后通过反射重写那个h的mcall
 管道pipe＋ epoll 结合， 通过epoll来监听管道的读端， 看看管道的写端有没有数据写入，如果有数据写入， 管道的读端就会被唤醒。
 
 3、加载插件中的资源
-resourcemanager－》 assertmanger－》addassertpath，，然后创建一个用assertmanager来创建resource。 所以我们的方法， 通过反射将我们的插件apk的路径调用addassertmanager方法插入到assertmanger中。
+contextimpl－》resourcemanager－》 assertmanger－》addassertpath，，然后创建一个用assertmanager来创建resource。 所以我们的方法， 通过反射将我们的插件apk的路径调用addassertmanager方法插入到assertmanger中。
 
 现在主流的网络请求中为什么要用retrofit＋rxjava组合来进行请求的？
 因为rxjava可以做到随意切换线程（数据处理在io线程中， 页面刷新在主线程中）；
@@ -533,9 +533,9 @@ android上用wait和notify来实现。
 
 求取中位数实现思路， 先把数据分成两等份，实例化两个堆，一个大顶堆，一个小顶堆，小顶堆的数据都要大于大顶堆中数据， 此时中位数就是大顶堆或小顶堆中的堆顶数据。 然后当新增数据后， 把新增的数据移动到大顶堆或小顶堆， 然后再把数据做转移， 保证大小堆中的数据相等，或大顶堆中的数据比小顶堆中的数据＋1即可。然后就获取到了中位数。
 
-插件话问题总结：
+插件化问题总结：
 解决的问题，类的加载，资源的加载
-类的加载： 新建一个插件apk的classloader， 取出其中的dexelements， 然后通过hook技术取出宿主程序的classloader中的dexelements文件，然后新建一个新的dexelement， 把插件和宿主程序的dexelements合并进去。 通过反射setfeild来来设置pathdexlist。这样宿主程序就可以访问插件中的类文件了。 
+类的加载： 新建一个插件apk的classloader， 取出其中的dexelements， 然后通过hook技术取出宿主程序的classloader中的dexelements文件，然后新建一个新的dexelement， 把插件和宿主程序的dexelements合并进去。 通过反射setfield来来设置pathdexlist。这样宿主程序就可以访问插件中的类文件了。 
 
 如何解决插件中的activity的调用问题呢？ 创建一个站桩activity， 在ams检验之前，  把插件中的activity设置成站桩activity，同时保留插件activity的信息，在ams检查之后，再把插件activity替换出来。 那这么样实现替换工作呢？
 
@@ -581,6 +581,7 @@ ui事件传递：
 7、 title栏做了统一， 所有页面用同一个view；
 8、 push推送做了统一处理， 外层统一封装一层借口， 使得外部调用统一，即使将来添加新的第三方推送的sdk，客户端修改的工作量不会太大；
 9、 组件化架构升级， 降低藕合度。 模块间跳转以及数据获取通过接口来实现； 定义一个单例类， 通过hashmap来保存所有的接口和实现类， 而在每个moudle中把这个单例类传进去， 这样所有的模块就都可以访问到这些实现以及他们的接口方法了；
+map<string, IPlugin> key值是通过tag和借口类class生成的；
 10、通过加入aspectj 面向切面编程技术解决类似登陆相关的问题； 在连接点函数before之前加入函数判断来说明函数的解析；
 11、通过自定义本地unCaughtExceptionHandler， 通过调用setUnCaughtExceptionHandler来拦截异常，并保存到本地文件夹，方便后续拿到log日志来定位问题；主要是在测试阶段使用。
 12、dplink制定统一的协议， 来解析web请求；
@@ -588,8 +589,8 @@ ui事件传递：
 14、规范线程安全的实例对象写法，埋点sdk在加入rn线程后出现崩溃问题；
 
 如何实现一个线程安全的map类
-1、map对象神明成volatile类型；
-2、get和put方法上上锁；
+1、map对象申明成volatile类型；
+2、get和put方法添加synchronized关键字进行上锁；
 
 http和https的区别：
 http是基于tcp传输的，主要是他传递的数据量比较大， 另外它是一种无状态的连接；
@@ -598,7 +599,7 @@ https是http＋ ssl／tls协议， ssl底层是基于tcp／ip的， 做了数据
 ssl协议有两层， 一层使ssl记录协议， 是建立在tcp协议基础上，做数据的压缩和加密和解密工作。 一层时ssl握手协议，主要是在通讯之前， 对双方身份进行认证， 以及协商加密算法和交换加密密钥。
 
 1、https要向ca申请证书
-2、网络请求端口不一样， 一个是80，一个是443
+2、网络请求端口不一样， http是80，https是443
 3、http是超文本传输协议，传输的是明文， 而https是具有安全性的ssl加密传输协议；
 4、https握手阶段比较耗时， 所以加载比较长；
 
@@ -631,9 +632,10 @@ handler问题相关总结：
 二分查找变种的问题：
 已经排序的数组中数据是有重复数据的， 比如查找第一个等于value的数据， 最后一个等于value的数据， 第一个大于等于value的数据， 最后一个大于等于value的数据等。
 
-AsyncTask在android23里面， 默认是串行执行的， 就是一个任务执行完了后， 才会执行下一个任务， 若要解决这个问题， 需要重写自己的executor即可。 AsyncTask中有个executor，它是一个THREAD_POOL_EXECUATOR， 我们通过调用task.executeOnExecutor(executor)，就可以实现多任务开发了。 不过最好还是使用默认的， 除非不得已再使用那个了。
+AsyncTask在android23里面， 默认是串行执行的， 就是一个任务执行完了后， 才会执行下一个任务， 若要解决这个问题， 需要重写自己的executor即可。 AsyncTask中有个executor，它是一个THREAD_POOL_EXECUATOR， 我们通过调用task.executeOnExecutor(executor)，就可以实现多任务并发了。 不过最好还是使用默认的， 除非不得已再使用那个了。
 一个asynctask任务被创建后， 只能执行一次任务。 如果启动asynctask， 当前task不是处于pending状态， 就会直接抛出异常。 默认只有三种状态， pending、 running和finish状态。
 一个asynctask被创建后， 只有等这个任务执行完毕了， 才会被销毁这个asynctask这个对象。 里面有个threadpoolexecutor对象， 管理者所有的asynctask对象。
+
 
 23种涉及模式：
 创建型：
@@ -651,6 +653,8 @@ any_rtc商业级的实时直播框架
 
 bindservice和startservice的区别：
 1、调用的生命周期方法不同；
+oncreate  onstartcommend ondestory
+oncreata  onbind
 2、startservice启动的service， 必须调用stopservice才会退出，  而bindservice启动的service，退出有两种呢方案， 一种使unbindservice，一种是启动service的actiivty退出；
 
 有了thread，为什么还要用service呢？
