@@ -236,6 +236,7 @@ greenDAO、 Room
 内存优化的策略：
 设备划分等级
 bitmap优化
+一般内存不足，是由于java对内存不足导致， 所以我们可以通过申请native的内存空间来达到较高的内存占用比。 还可以通过hprof工具来检测重复的图片和无用的图片资源
 防止内存泄漏
 
 sqlite数据库都有哪些锁？
@@ -663,11 +664,70 @@ oncreata  onbind
 ffplay的线程模型是什么？
 
 measure的四种测量模式都有什么？
-unspecified, 父容器对子容器大小没有限制，要多大给多大
-at_most：父容器限制了子容器的大小，最大为多少
-exactly：父容器明确知道子容器的大小， 确切值
+unspecified, （无限制）父容器对子容器大小没有限制，要多大给多大
+at_most：（最大模式）父容器限制了子容器的大小，最大为多少
+exactly：（精准模式）父容器明确知道子容器的大小， 确切值
+对于view来说
+exactly精准模式就对应于match_parent
+at_most最大模式就对应于wrap_content
+unspecified无限制表示没有限制模式
+
+mesurespec是一个int整形32位表示的int数字， 前两位表示mode， 后30位表示大小
+int measureSpec=MeasureSpec.makeMeasureSpec(size, mode)，通过size和mode生成新的measureSpec
+setMeasuredDimension设置view的长宽
 
 委托模式：有两个对象参与处理同一个请求， 接受请求的对象将请求委托给另一个对象来处理。
+
+http的缓冲涉及到的字段：
+expires：缓冲有效期
+cache－control：是否要缓冲的字段
+last－modified：上一次修改缓冲数据时间
+etag：tab版本
+data：
+if－modified－since：后面跟一个时间， 判断这个时间之后服务器端的数据有没有变更过
+if－none－match： 判断有没有缓冲被命中
+
+LinearGradient线性渐变的效果类
+
+ 普通广播和有序广播
+ 有序广播：
+ 有序广播的接收者们将按照事先申明的优先级依次接收，数越大优先级越高（取值范围：-1000~10000），优先级可以声明在<intent-filter android:priority="n".../>，也可以调用IntentFilter对象的setPriority设置。并且接收者可以终止传播（调用abortBroadcast()方法即可终止），一旦终止后面接收者就无法接受广播。另外，接收者可以将处理结果存入数据（可通过setResultExtras(Bundle)方法将数据存入Broadcast），当做Broadcast再传递给下一级接收者（可通过代码Bundle bundle = getResultExtras(true)获取上一级传递过来的数据）。
+
+ setResultExtras
+　　短信拦截原理：系统收到短信，发出的Broadcast属于有序广播，程序就可以通过设定优先级先接收到通知，然后终止传递。
+
+startservice和bindservice，多次调用startservice和bindservice，会出现几个service的实例 
+
+broadcastreceiver的onreceiver方法中创建一个线程， 有可能导致线程和广播的内存泄漏。
+线程没有退出，导致线程的内存泄漏，
+由于线程内部类持有外部类的应用， 导致receiver也内存泄漏，
+sendOrderedBroadcast是发送有序广播
+
+线程start之后，必须调用stop才能使线程退出。
+
+[server端返回]last－modify－》 if－modify－since[客户端请求header添加字段]
+[server端返回]etag－》 if－none－match[客户端请求header添加字段]
+
+okhttp拦截链
+1、重定向连接器， retryandfllowupinterceptor， 创建了streamallocation
+2、桥接拦截器：bridgetinterceptor，设置内存长度， 编码方式， 请求头， gzip压缩， cookie
+3、缓存拦截器；cacheinterceptor， 添加缓存逻辑处理， 就是让下一次网络请求节省更多时间，加快页面展示速度
+4、连接拦截器：connectinterceptor， 创建网络连接
+5、callserverinterceptor， 执行真正的网络请求
+
+
+http返回码：
+2xx：成功
+3xx：重定向
+4xx：客户端错误
+5xx：服务器错误
+
+
+
+
+
+
+
 
 
 
