@@ -724,6 +724,123 @@ http返回码：
 
 
 
+java中的数据结构都有哪些分类？
+
+java中都有哪些数据结构实现了collection这个接口？
+
+java对堆内存分代策略？如何自己写一个垃圾回收算法？
+
+java中工作内存中数据是存放在ram中的吗？
+
+如何判断一个链表是一个环状链表？
+
+sp.applay和sp.commit的区别？
+
+activity在onstart中执行finish操作， 后续会走哪些生命周期函数， 为什么？
+
+现在你刚接手了一个新项目，项目中存在内存泄漏，如何在短时间内查出在哪块有内存泄漏？
+加入leakcanary
+3.0以前用android monitor， 3.0以后用android profiler工具
+
+现在接手一个新项目， 如何搭建项目框架？
+
+垃圾回收算法：
+首先垃圾回收，90%区域在堆内存，10%区域在方法区。堆区又按照对象的存活生命时长， 分为新生代和老年代区域。 垃圾回收时，优先回收新生代中对象， 所以新生代中的对象都有朝生夕死的特性， 新生代中采用的垃圾回收算法是复制算法。  而老年代中采用的垃圾回收算法是标记－整理算法；
+标记－清除算法
+效率低下，容易造成大量的垃圾碎片，申明不到足够的内存空间，再次触发gc垃圾回收
+
+复制算法（新生代垃圾回收算法）
+空间被分成eden和survivor from和survivor to区域， 按照比例8:1:1来划分的；
+
+分代搜集算法：
+根据新生代和老年代， 分别使用不同的垃圾回收算法，新生代采用复制算法， 老年代使用标记整理算法
+
+
+标记－整理算法（老年代垃圾回收算法）
+
+垃圾回收算法链接：https://blog.csdn.net/weixin_40739833/article/details/80717638
+
+java内存模型中，有主存和工作内存之分：
+主存是放在ram中的
+工作内存是放在apu寄存器和高速缓冲区中的。
+
+为什么要这么设计， 主要是由于cpu计算速度和从内存中读取速度有差异导致的。 而为了降低两者之间的速度差异， 加入了工作内存的概念。
+
+有一组无序数组， 如何实现一种算法， 提取第k大的数据？
+
+java中有哪些集合类接口？
+collection、 set、 list和map，其中set和list实现了collection接口， collections算法提供了对集合进行排序和便利的多种算法实现
+Collections.sort(list)，对list进行排序
+Collections.max(list)，求取list中对最大元素值
+Collections.min(list)，求取list中的最小元素值
+Collections.binarySearch(list, "value")，查处list中值为value的元素的下标
+Collections.replaceAll(list, "aaa", "bbb")，把list中值为aaa的元素全部替换成bbb
+Collections.reserve(list)，把list做反转操作
+
+java中线程安全的集合类都有哪些？
+stringbuffer、 vector和hashtable
+
+java中常见的数据结构都有哪些，最好按类来分？
+collection  
+  list－》arraylist、linkedlist和vector
+  set－》 hashset和treeset
+map－》hashmap和treemap
+
+最好不要在广播接收中创建创建子线程来执行耗时操作， 因为广播接收者的生命周期比较短暂， 当收到广播后，才会被激活， 当执行完onreceiver后就会结束掉， 此时当activity退出了， receiver结束了， 此时进程就是一个空进程， 就有可能被系统回收掉。
+
+一个activity按home键处于后台任务的情况下， 会不会被系统回收掉？
+有可能会被回收掉的，因为按home键后，系统处于后台任务，优先级会就会降低，当垃圾回收的时候，就有可能被回收掉
+
+一个service如何实现保活？
+
+面向对象要遵循的设计原则：
+单一原则
+开闭原则， 对修改关闭， 对扩展开放
+接口隔离原则， 尽量把接口做拆分， 不能搞一个大的接口
+依赖倒置原则， 抽象不依赖于具体， 具体依赖于抽象
+合成复用原则， 尽量使用组合， 而不要通过继承来复用 
+迪卡特原则， 一个实体类尽量不要和其他实体类相互依赖
+里氏替换原则， 一个基类替换成子类后不会有任何错误
+
+
+进程保活都有哪些措施？
+1、手机启动接受广播，启动service；
+2、双进程实现保护机制，其中一个是守护进程；
+3、通过startcommand函数中，返回进程被杀死时，再次启动的问题；
+4、可能用到alarmmanager；
+5、进程保活会消耗大量的cpu和内存资源；
+
+
+lmk的low memory killer机制？
+主要是根据进程的oom——adj的值来判断进程的优先级， 值越小， 越重要， 被杀死的优先级越低；
+
+如何实现进程的保活呢？
+调用startForegound， 让你service所在的进程升级为前台进程；
+在service的onstop方法中重启改service；
+将service设置成，被杀死后，重启改service；
+双进程相互监听保护，
+进程杀死后，如何复原？没有什么好的办法，通过数据库保存现场数据。 每次启动后，判断应用程序是不是被意外杀死，如若被意外杀死，则从数据库读取复原现场；
+
+app被杀死后，如何保留原油数据？
+
+
+热修复的集中实现方案？
+因为应用进程是被zygote进程启动起来的，可以通过hook技术hook app_process这个进程。 通过aop面向切面编程技术来实现的。 
+通过hook技术修改basedexclassloader中的dexpathlist这个属性。 把修复后的dex包插入到dexpathlist数组的最前面。
+通过addassertpath得到插件apk的assertmanager，通过getresource得到其资源。
+
+一些棘手问题？
+1、埋点sdk多进程数据错乱的问题；
+2、target权限升级，用户允许权限后，切换到后台，然后用户手动关闭权限后再次打开app后崩溃的问题；
+3、列表页添加vr动画后，内存oom的问题；
+4、动画相关的问题；
+5、
+
+
+
+
+
+
 
 
 
