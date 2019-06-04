@@ -483,6 +483,17 @@ public final Singleton{ ／／final为了让这个类不能被继承，防止集
         return singleton;
     }
 }
+对于上面的来说，setAccessible（）值为true，表示取消访问权限限制。也就是可以访问它的一些私有方法。实例如下：
+         Class clazz = SingletonTest.class;
+         /*以下调用无参的、私有构造函数*/   
+         Constructor c0=  clazz.getDeclaredConstructor(); 
+         c0.setAccessible(true); 
+         SingletonTest po=(SingletonTest)c0.newInstance();
+         System.out.println("无参构造函数\t"+po); 如下：
+
+volatile关键字能保证操作的操作的有序性，但不能保证操作的原子性，所以适合的场景是一个线程写，多个线程读。
+缓冲一致性协议就是表示当一个线程修改一个变量的时候，如果发现这个变量是共享变量，就通知其他cpu，这个缓冲变量实效。 所以当其他线程操作该变量的时候，需要从主存中读取的。
+
 
 涉及到主内存和工作内存中的数据同步，如果不添加valatile关键字修饰的话，没有办法保证数据及时同步
 //加入volatile就是为了防止重排序，一个对象的创建过程包括如下几个步骤：
@@ -491,6 +502,10 @@ public final Singleton{ ／／final为了让这个类不能被继承，防止集
 3.设置instance指向刚分配的内存地址
 当instance指向分配地址时，instance不为空
 但是，2、3步之间，可能会被重排序，造成创建对象顺序变为1-3-2.所以需要加入volatile关键字防止重排序
+
+编译器为了提高效率，做了指令重排操作。所以不保证cpu执行的顺序和代码本来的顺序是一致的。 但。是他会保证执行结果是一致的。
+要想并发程序正确的执行，必须保证原子性、可见性和有序性。
+synchronized和lock保证了原子性， volatile保证了有序性和可见性。volatile禁止指令重排，保证有序性。
 
 
 饿汉式实现，天生线程安全
@@ -511,7 +526,7 @@ synchronized关键字的作用：
 线程的同步一般情况下要如何实现： 一般linux下用信号量来实现， signal
 android上用wait和notify来实现。
 
-子线程拥有主线程的资源， 除此之外， 子线程还有自己的堆栈区域， 在子线程内部创建的一些全局变量是私有的， 主线程是没有办法访问到的。 
+子线程拥有主线程的资源， 除此之外， 子线程还有自己的栈区域， 在子线程内部创建的一些全局变量是私有的， 主线程是没有办法访问到的。 
 
 对排序设计的步骤：
 说明：堆是一个完全二叉树
@@ -566,10 +581,10 @@ ui事件传递：
 静态广播和动态广播：
 动态广播的优先级要比静态广播的优先级要高， 肯定是动态广播先执行。 
 
-如何优化布局：
+如何优化布局：（主要就是减少view的层级）
 采用viewstud加include
 采用merge
-采用约束布局coriesslayout
+采用约束布局corresslayout
 
 
 项目中都做了哪些优化？
@@ -682,7 +697,7 @@ http的缓冲涉及到的字段：
 expires：缓冲有效期
 cache－control：是否要缓冲的字段
 last－modified：上一次修改缓冲数据时间
-etag：tab版本
+etag：缓冲版本
 data：
 if－modified－since：后面跟一个时间， 判断这个时间之后服务器端的数据有没有变更过
 if－none－match： 判断有没有缓冲被命中
@@ -708,6 +723,7 @@ sendOrderedBroadcast是发送有序广播
 [server端返回]last－modify－》 if－modify－since[客户端请求header添加字段]
 [server端返回]etag－》 if－none－match[客户端请求header添加字段]
 
+
 okhttp拦截链
 1、重定向连接器， retryandfllowupinterceptor， 创建了streamallocation
 2、桥接拦截器：bridgetinterceptor，设置内存长度， 编码方式， 请求头， gzip压缩， cookie
@@ -722,8 +738,6 @@ http返回码：
 4xx：客户端错误
 5xx：服务器错误
 
-
-
 java中的数据结构都有哪些分类？
 
 java中都有哪些数据结构实现了collection这个接口？
@@ -731,6 +745,7 @@ java中都有哪些数据结构实现了collection这个接口？
 java对堆内存分代策略？如何自己写一个垃圾回收算法？
 
 java中工作内存中数据是存放在ram中的吗？
+不是的，是存放在寄存器或高速缓冲中的
 
 如何判断一个链表是一个环状链表？
 
@@ -755,6 +770,8 @@ activity在onstart中执行finish操作， 后续会走哪些生命周期函数�
 分代搜集算法：
 根据新生代和老年代， 分别使用不同的垃圾回收算法，新生代采用复制算法， 老年代使用标记整理算法
 
+永生代，指的是操作系统层面的申请的内存空间
+
 
 标记－整理算法（老年代垃圾回收算法）
 
@@ -762,14 +779,15 @@ activity在onstart中执行finish操作， 后续会走哪些生命周期函数�
 
 java内存模型中，有主存和工作内存之分：
 主存是放在ram中的
-工作内存是放在apu寄存器和高速缓冲区中的。
+工作内存是放在cpu寄存器和高速缓冲区中的，解决内存读取速度和cpu计算速度性能相差较大的问题
 
 为什么要这么设计， 主要是由于cpu计算速度和从内存中读取速度有差异导致的。 而为了降低两者之间的速度差异， 加入了工作内存的概念。
 
 有一组无序数组， 如何实现一种算法， 提取第k大的数据？
+用快速排序，每次折半，查看碰面的数据的下标是不是为k，是就是表明找到了， 不是再折半区间，继续查找，知道找到为止；
 
 java中有哪些集合类接口？
-collection、 set、 list和map，其中set和list实现了collection接口， collections算法提供了对集合进行排序和便利的多种算法实现
+collection、 set、 list和map，其中set和list实现了collection接口， collections算法提供了对集合进行排序和遍历的多种算法实现
 Collections.sort(list)，对list进行排序
 Collections.max(list)，求取list中对最大元素值
 Collections.min(list)，求取list中的最小元素值
@@ -808,11 +826,14 @@ map－》hashmap和treemap
 2、双进程实现保护机制，其中一个是守护进程；
 3、通过startcommand函数中，返回进程被杀死时，再次启动的问题；
 4、可能用到alarmmanager；
-5、进程保活会消耗大量的cpu和内存资源；
+
+ii：把service设置成前台进程；
+ii：启动高度为1像素的notification；
+ii：循环播放一个没有声音的音频数据；
 
 
 lmk的low memory killer机制？
-主要是根据进程的oom——adj的值来判断进程的优先级， 值越小， 越重要， 被杀死的优先级越低；
+主要是根据进程的oom_adj的值来判断进程的优先级， 值越小， 越重要， 被杀死的优先级越低；
 
 如何实现进程的保活呢？
 调用startForegound， 让你service所在的进程升级为前台进程；
@@ -824,7 +845,7 @@ lmk的low memory killer机制？
 app被杀死后，如何保留原油数据？
 
 
-热修复的集中实现方案？
+热修复的其他实现方案：
 因为应用进程是被zygote进程启动起来的，可以通过hook技术hook app_process这个进程。 通过aop面向切面编程技术来实现的。 
 通过hook技术修改basedexclassloader中的dexpathlist这个属性。 把修复后的dex包插入到dexpathlist数组的最前面。
 通过addassertpath得到插件apk的assertmanager，通过getresource得到其资源。
@@ -834,7 +855,89 @@ app被杀死后，如何保留原油数据？
 2、target权限升级，用户允许权限后，切换到后台，然后用户手动关闭权限后再次打开app后崩溃的问题；
 3、列表页添加vr动画后，内存oom的问题；
 4、动画相关的问题；
-5、
+
+jni一些实战：
+jclass jc ＝ env->findClass("com/demo/Demo");
+jobject jo = env->allocObject(jc);
+jmethodid mid = env->GetMethodId(jc, "append", "(LJava/lang/String;I)LJava/lang/String")";
+JString str = env->callObjectMethod(jo, jmethodid, "", 12);
+
+系统新特点：
+6.0的动态权限功能
+7.0的分屏功能
+8.0的画中画、后台服务受限、广播限制
+9.0的刘海设计、material design、全部使用https、使用黑白模式切换、加入护眼模式
+
+gc root节点是如何选择的？
+方法区中的静态变量、常量；
+栈中的本地方法列表，局部变量生命周期随着函数的结束就结束了；
+
+如何判断两个链表是否相交？
+两个链表同时入栈，判断栈顶的元素是否一样，一样则说明相交；
+同时遍历两个链表到尾部，判断尾部是否一样，一样则说明相交；
+
+如何判断一个链表是否有环？
+穷举法：依次遍历，每取出一个，就和前面的元素做判断，是否存在？存在说明有环。否则无环？
+快慢指针法：
+set集合：每次遍历数据后，插入集合，判断集合大小，如果不加1了，就说明有环；
+
+android中intent传递数据超过1m的时候，就会报异常
+
+powermanager的wakelock（PARTIAL_WAKE_LOCK类型），获取锁之后，在释放锁之前，cpu会一直处于唤醒状态；
+alarmmanager做一些定时任务；
+WakefulBroadcastReceiver结合intentservice，会在启动intentservice的时候持有锁，执行完毕后，释放锁，所以保证了在程序执行完前；
+jobschedule来做一些延时任务。在指定的条件下
+
+查看当前正在运行的activity的命令？
+adb shell dumpsys activity activities | grep "Run"
+
+onpause和onstop的区别？
+当a调起b时，会调用a的onpause方法，onstop表示只有某一个activity为不可见的时候，才会被调用到。当一个actiivty的theme被设置成dialog时候，onstop不会被调用到，因为activity不会变成不可见状态。 再者，app被lmk杀死的情况下，onstop也有可能不会被调用到。。。
+
+android属性动画小结？（valueanimator和objectanimator）
+为什么要使用属性动画：
+传统帧动画和补间动画不能满足复杂动画的需求；
+只是想通过改变属性来达到动画的效果；
+
+补间动画会改变view的属性值
+原理：
+1、设置初始状态和结束状态；
+2、给定变化趋势（插值器和估值器）；
+3、每次变化后通过调用invaluate（）来重新绘制view，达到刷新的目的；
+
+插值器（实现interpolator接口）和估值器（实现typeevaluate接口）
+插值器使用系统的一般就可以了；
+估值器需要自定义实现；比如抛物线动画；
+
+如何获取view的宽高？
+1、onWindowFocusChanged；
+2、监听viewtree是否绘制完成；
+3、通过idlehandler来监听；
+
+热修复方案：
+1、qqzone的dex插桩，存在的问题是插桩带来的性能问题，以及类被打上了isprefied标签导致运行报错；
+2、美团rebost热插拔方案，在编译阶段，为每个类打入了changequickredirect字段， 而后又为这个类的每个方法入口添加代码，以便做热修复操作；
+3、腾讯tinker，服务器做dex插值， 自己写dexdiff和dexmerge算法， 把原有包中的有问题的类的定义删除，这样就可以只能加载到热修复的包中的方法了；
+4、dexposed和andfix方案
+
+为什么内部类使用的外部变量都必须使用final修饰符？
+主要是因为内部类的生命周期和外部变量的生命周期不一致导致的；
+
+recycleview内存优化，需要考虑哪些问题？
+要充分利用recycleview的缓冲机制
+
+包体积优化？
+lint unuseresource 无用资源优化
+使用一套布局文件，资源文件xhdpi
+tinypng对图片资源进行压缩
+webp图片资源优化
+
+
+
+
+
+
+
 
 
 
