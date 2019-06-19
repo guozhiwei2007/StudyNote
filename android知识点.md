@@ -875,6 +875,7 @@ gc root节点是如何选择的？
 如何判断两个链表是否相交？
 两个链表同时入栈，判断栈顶的元素是否一样，一样则说明相交；
 同时遍历两个链表到尾部，判断尾部是否一样，一样则说明相交；
+最好就是遍历尾部节点，如果一样则相交
 
 如何判断一个链表是否有环？
 穷举法：依次遍历，每取出一个，就和前面的元素做判断，是否存在？存在说明有环。否则无环？
@@ -932,11 +933,11 @@ lint unuseresource 无用资源优化
 tinypng对图片资源进行压缩
 webp图片资源优化
 
+冷启动耗时统计
+adb shell am start -S -W 包名/启动类的全限定名
+例如：adb shell am start -S -W com.example.moneyqian.demo/com.example.moneyqian.demo.MainActivity
 
-
-
-
-
+将Bugly，x5内核初始化，SP的读写，友盟等
 
 
 
