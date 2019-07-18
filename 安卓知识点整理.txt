@@ -127,7 +127,7 @@
   
    4)surface到底是怎么款进程传递的?  
 
-5、内存优化
+6、内存优化
    1）按设备等级划分，做出不同的策略；比如低配的手机设备，去掉一些复杂动画和特效，图片用低分辨率的。
    2）bitmap优化，一般内存不足，是由于java内存不足导致的， 我们可以通过申请native内存空间，来增加内存占比。还可以通过android lint工具来检测重复的图片资源和无用图片资
       源；
@@ -166,7 +166,7 @@
        
 		 
 		 
-6、性能优化
+7、性能优化
    1）卡顿优化
       a、优化方案
 		 不要在主线程中执行耗时操作，比如网络访问和大文件IO操作
@@ -218,7 +218,7 @@
    备注:参考资料链接:https://www.jianshu.com/p/d71b51a0e29f
 
 
-7、handler相关
+8、handler相关
    1） 子线程能否创建handler，怎么创建？
        因为每个线程都会有个Looper，但是子线程默认情况下是没有启动Looper的，所以需要执行如下步骤才可
 	   Looper.prepare（）
@@ -239,7 +239,7 @@
        是基于时间来进行排序，每次发送消息的时候，messagequeue得到消息后，会根据消息的时间把消息插入到指定的位置。这样就能保证每次取消息的时候，都能取到最前面的消息。
 	   
 
-8、binder机制
+9、binder机制
    1） binder机理是什么？
        涉及Client、Service、serviceManager以及binder驱动。
 	   servicemanager相当于是dns， binder驱动相当于是路由器， server为client提供服务， 但是相对servicemanager来说是客户端。 
@@ -252,17 +252,17 @@
 	   没有办法篡改系统服务,  因为只有在底层配置文件init.rc中配置的服务才能被注册到ServiceManger中. 就保证服务的稳定性. 
 	
 
-8、包体积优化
+10、包体积优化
    使用lint检测无用资源
    扫描无用的类
    使用一套布局文件，xhdpi资源文件
    tinypng对图片进行压缩
    resguard进行打包
    
-9、app加固的问题
+11、app加固的问题
 
 
-10、android系统新特性
+12、android系统新特性
    1）各个版本的新特性：
 	  5.0新特性
 	  6.0新特性
@@ -305,9 +305,40 @@
 	       解决方案：默认类型为TYPE_SYSTEM_ALERT，修改成TYPE_APPLICATION_OVERLAY就好了。 
 	  
 	  备注：参考资料连接地址：https://www.jianshu.com/p/c533fb37cb59
+	  
+13、浅谈zygote进程？
+    1）zygote进程是由谁启动起来的
+	   zygote进程是系统init进程启动起来的。init进程是安卓系统起来之后启动的第一个进程。 init进程起来后，会读取系统配置文件init。rc文件，里面配置了很多系统服务，他会逐
+	   个启动起来。最常见的有zygote进程和ServiceManager进程。
+	
+	2）zygote进程起来后都做了什么事？
+	   a、native世界
+	      创建java虚拟机
+		  注册android的jni函数
+		  进入java世界
+	   b、java世界
+	      预加载常用类，资源和共享库
+		  启动SystemServer进程
+		  启动Socket的Loop循环，等待孵化应用进程的消息
+		  
+		  启动应用进程流程
+		  fork应用进程
+		  读取参数，执行ActivityThread。main函数（启动loop循环，向ams注册ApplicationThread）
+		 
+	备注：由于zygote进程启动了虚拟机，应用进程是由zygote进程启动起来的，所以应用进程不需要创建虚拟机了。 但是需要启动binder驱动。
+	      zygote进程和别的进程通讯是用到了socket，而不是binder通讯。
+		  
+14、android系统进程都有哪些？
+    zygote进程
+	ServiceManager进程
+	SurfaceFlinger进程
+	MediaServer进程
+	
+	备注：由于SystemServer进程是由zygote进程启动起来的， 所以没算在系统进程里面，其包括在zygote进程之中了。 
+	      比如常见的ams、wms和pms这些系统服务是由SystemServer启动起来的。 
+	
    
-   
-11、其他
+14、其他
    1) 动态广播和静态广播谁先被执行？
       动态广播的优先级比较高，所以先被执行
 
@@ -441,6 +472,10 @@
 	   的activity退出。
 	   
    21）binder进程间通讯之aidl（面向接口定义语言）
+       创建.aidl文件，binder对象
+	   创建aidlServer，绑定前面的binder对象
+	   通过bindService绑定该aidlserver
+	   通过ServiceConnection，onServiceConnected中获取binder代理对象。就可以直接调用binder对象的接口获取服务了。
    
    22）BroadcastReceiver的onReceiver方法中创建了一个thread，会有什么问题？
        这属于内部类的问题, 内部类持有外部类的引用.  当Receiver生命周期走完的时候, thread没有退出, 就有可能造成Receiver内存泄漏 .
@@ -580,6 +615,10 @@
 	   如果此时线程没有退出，就会导致BroadcastReceiver内存泄漏。
 	   
    44）当个activity的app是如何实现的？
+   
+   45）常见的AOP（面向切面编程）都有哪些？
+	   AspectJ
+	   Java Assistent
    
    
 12、adb命令小结
@@ -907,6 +946,16 @@
    行效率。
    
    为什么要加入工作内存（高速缓存）的概念，由于cpu计算速度和内存读取速度存在代差，为了弥补，才引入工作内存的概念
+   
+  
+3、java栈和栈桢？
+   jvm为每个线程分配一个堆栈，以桢为单位并保存线程的状态。 有入栈和出栈操作。每一个栈帧都包括了局部变量表，操作数栈，动态连接，方法返回地址和一些额外的附加信息。每一
+   个方法的执行都伴随着栈桢的入栈和出栈操作。只有位于栈顶的栈帧才是有效的，这个叫做当前栈帧（Concurrent Satck Frame），与这个栈帧相关的方法称作当前方法（Concurrent 
+   Method）
+   
+   局部变量表保存了方法参数+方法内局部变量
+   操作数
+   
 
 3、java常见的垃圾回收算法算法都有哪些？如何实现一个垃圾回收算法？
    垃圾回收的内存区域是对内存中的数据，这块区域又被分成新生代、老年代和永生代。按照对象在内存中的存活时间来划分的。
@@ -1037,14 +1086,12 @@
 
 
 3、容易混淆的设计模式
-   
    工厂模式和简单工厂模式，工厂方法模式，抽象工厂模式
 
-
+4、面向对象设计原则
    1）单一原则
    2）开闭原则， 对修改关闭， 对扩展开放
-   3）接口隔离原则， 
-   量把接口做拆分， 不能搞一个大的接口
+   3）接口隔离原则， 把接口做拆分， 不能搞一个大的接口
    4）依赖倒置原则， 抽象不依赖于具体， 具体依赖于抽象
    5）合成复用原则， 尽量使用组合， 而不要通过继承来复用 
    6）迪卡特原则， 一个实体类尽量不要和其他实体类相互依赖
@@ -1052,8 +1099,8 @@
 
 
 五、数据结构
-1、java中的数据结构按类型分为哪些?
-   collection接口类和map接口类， 其中set、list和都实现了collection接口。其中collection接口的方法如下：
+1、java中的数据结构按类型分为哪些？
+   collection接口类和map接口类， 其中set、list都实现了collection接口。其中collection接口的方法如下：
    Collections.sort(list)，对list进行排序
    Collections.max(list)，求取list中对最大元素值
    Collections.min(list)，求取list中的最小元素值
@@ -1067,7 +1114,7 @@
    map－》hashmap和treemap
    
 2、哪些数据结构是线程安全的?
-   hashtable、stringbuffer、vector
+   hashtable、concurrenthashmap、stringbuffer、vector
 3、如何设计一个线程安全的队列?
    要保证数据的原子性（synchronizeds）、有序性和可见性（volatile）
 4、你在项目中最常用的队列种类都有哪些?
@@ -1075,13 +1122,18 @@
    hashmap是非线程安全的；
    hashtable是线程安全的，但是同时只能有一个线程做写操作，效率比较低下；
    concurrethashmap是线程安全的，他内部使用锁分段机制，map被分为16个桶状结构，可能同时支持16个线程同时操作；
-   
+
 6、解决hash冲突的策略方法都有哪些?
+   1）开放定址法，比如取模法，冲突后，向后找，查找第一个未被占用的地址放进去
+   1）链地址法
+   2）再哈希法
+   3）建立一个公共溢出区
+
 7、linkedhashmap概述,常用的垃圾回收算法是用的什么类型的数据结构?
-   linkedhashmap的数据结构是hashmap和linkedlist的组合。每个entry节点中有三个指针。一个指向前序节点，一个指向后续节点，一个指向发生hash碰撞时链接的下一个节点。常见的
-   LRU（最近最少使用）算法内部就是利用linkedhashmap这数据结构来实现的。
-   
-8、sparseArray、arraymap、hashmap的关系？
+   linkedhashmap的数据结构是hashmap和双向linkedlist的组合。每个entry节点中有三个指针。一个指向前序节点，一个指向后续节点，一个指向发生hash碰撞时链接的下一个节点。常
+   见的LRU（最近最少使用）算法内部就是利用linkedhashmap这数据结构来实现的。
+
+8、sparseArray、arraymap与hashmap的关系？
    sparseArray更节省内存，性能更高。hashmap的key和value的类型均为泛型。而sparseArray的key为int，value为Object类型。他里面有两个数组结构，分别存储了key和value数据。
    arraymap是在sparseArray特点的基础上，存储的数据类型修改为任意类型。
    
@@ -1116,17 +1168,17 @@
       = (e.hash & (oldCapacity-1)) | (e.hash & oldCapacity) 第二步
       = e.hash & ( (oldCapacity-1) | oldCapacity) 第三步
       = e.hash & (newCapacity- 1) 第四步
-   
-   
 
 六、算法
 1、如何判断链表是否相交？
    1）两个链表同时入栈，判断栈顶元素是否一样？一样，则相交。
    2）两个链表同时遍历到尾部，判断尾部是否一样？一样，则相交。
    3）set集合法，两个链表同时加入set集合，每次加入集合大小都+1，则说明不相交。
+   
 2、如何判断链表是否有环？
    快慢指针法（步长为1，步长为2）
    set集合法, 每次取出元素后, 判断set集合的大小, 是否加1, 如果大小不再增加, 则表明有环, 利用了set集合的key值唯一的特性
+   
 3、二分查找：
    变种问题
    a、数组789123456，如何实现一种查找算法，时间复杂度为log（n）？数组789123456，如何实现一种查找算法，时间复杂度为log（n）？
@@ -1139,7 +1191,7 @@
 	  int middle = (left+right)/2;  //这块可能导致数据溢出，最好使用left ＋ （high － left） >> 1; 位操作效率更高
 	  
 	  if(value == arr[middle]) return middle;
-	  if(left >= right) return -1;//没有找到；
+	  if(left >= right) return -1;//没有找到;
 
 	  if(arr[middle] > arr[left]) { //左边是升序
 		 if(value >= arr[left] && value <= arr[middle]) {
@@ -1208,23 +1260,25 @@
 	a、原理和实现步骤：
 	堆是一个完全二叉树包括建堆和排序两个步骤。建堆完毕后，整个树成这样的结构。父节点大于等于（大顶堆）或小于等于（小顶堆）子节点。
 
-	建堆步骤如下：
+	建堆步骤如下：有两种情况， 分别是插入
 	1、插入一个元素：先插入堆的尾部，然后和父节点比较， 比父节点大， 则和父节点交换。 否则结束。
-	2、删除堆顶元素：删除后，把堆的最后一个元素放入堆顶， 然后和堆顶的自节点比较， 找出插入点，然后交换。
+	2、删除堆顶元素：删除后，把堆的最后一个元素放入堆顶， 然后和堆顶的子节点比较， 找出插入点，然后交换。
 
 	建堆完毕后， 就是排序了。 
+	
 	排序步骤如下：
 	1、堆顶和堆尾的数据进行交换；
 	2、堆顶元素和子节点比较，然后插入位置，进行交换即可类似上面的删除堆顶元素的操作步骤；
 
 	堆排序不用占用额外的内存空间。只是排完序后就会就成有序的了。 
+
 	b、时间复杂度：
 	快速排序和堆排序的时间复杂度都是O(nLogn)
 
 	应用场景：
 	优先级队列、求取top k、 求取中位数
 	求取topk的实现思路， 求n个数据中取出前k大的数据，初始化一个小顶堆， 然后再依次取出后面的n－k个数据，如果取出的数据比堆顶数据大，则删除堆顶数据，然后把数据入堆操
-	作。 依次执行完所有的数据， 此时就是前k个数据；
+	作。 依次执行完所有的数据， 此时就是前k大的数据；
 
 	求取中位数实现思路， 先把数据分成两等份，实例化两个堆，一个大顶堆，一个小顶堆，小顶堆的数据都要大于大顶堆中数据， 此时中位数就是大顶堆或小顶堆中的堆顶数据。 然后
 	当新增数据后， 把新增的数据移动到大顶堆或小顶堆， 然后再把数据做转移， 保证大小堆中的数据相等，或大顶堆中的数据比小顶堆中的数据＋1即可。然后就获取到了中位数。
@@ -1239,27 +1293,45 @@
       它是adobo公司开发的协议，包括OPTIONS、DESCRIBE、SETUP、 TEARDOWN、 PLAY等请求， 来控制视频播放的；实时性比较好，被广泛应用安防监控类行业。
 	  
    2）rtmp协议
+      
    
    3）hls协议
       是apple公司开发的协议。主要应用的移动设备上视频流传输。它采用分片的方式，将一个视频分成n多的小的视频片段。http负责数据的传输。
-	  m3u8：索引文件。要播放一个视频，需要先下载它的m3u8文件，里面包含视频流的地址。包括一级m3u8文件和二级m3u8文件。其中一级中包括对应的多路流媒体信息， 二级中包括对
-	  应的流中包括多少个ts视频流信息；
+	  m3u8：索引文件。要播放一个视频，需要先下载它的m3u8文件，里面包含视频流的地址。如果视频支持多分辨率的话，包括一级m3u8文件和二级m3u8文件。其中一级中包括对应的
+	  多路流媒体信息， 二级中包括对应的流中包括多少个ts视频流信息；
 	  ts：表示对应的视频流地址。
 	  
 	  备注：一般情况，每个ts流的市场大概在10s左右。
    
 2、ffplay的线程模型是什么？
+   解协议
+   解封装
+   解码
+   音视频同步
+   输出到音视频设备
 
-
+3、音视频同步怎么实现？
+   方案：
+   1）音频同步到视频
    
+   2）视频同步到音频
+      由于人耳对声音更敏感，另外声音的都是以固定频率进行播放。所以一般采用这种同步策略。 拿视频的pts和声音的pts进行比对。 如果滞后， 就跳帧。 如果超前， 就等待，重复
+	  播放一桢数据。你追我赶。
+   
+   3）音频、视频同时同步到外部时钟
+   .
+4、pts和dts的区别？
+   视频为了做到高压缩比例。引入了B桢的概念。正常的视频桢的顺序是I B B P，由于B桢是依赖前后桢，所以解码的顺序是I P B B。这样就出现了dts和pts不一致的问题。只有没有B桢的
+   情况下， 两者才是一致的。
+
 七、源码分析
 1、OKhttp源码
-   1）拦截链都有哪些？
-     a、重定向连接器， retryandfllowupinterceptor， 创建了streamallocation
-     b、桥接拦截器：bridgetinterceptor，设置内存长度， 编码方式， 请求头， gzip压缩， cookie
-     c、缓存拦截器；cacheinterceptor， 添加缓存逻辑处理， 就是让下一次网络请求节省更多时间，加快页面展示速度
-     d、连接拦截器：connectinterceptor， 创建网络连接
-     e、callserverinterceptor， 执行真正的网络请求
+   1）拦截器都有哪些？
+     a、重定向连接器， RetryAndFllowupInterceptor， 创建了streamallocation
+     b、桥接拦截器：BridgetInterceptor，设置内存长度， 编码方式， 请求头， gzip压缩， cookie
+     c、缓存拦截器；CacheInterceptor， 添加缓存逻辑处理， 就是让下一次网络请求节省更多时间，加快页面展示速度
+     d、连接拦截器：ConnectInterceptor， 创建网络连接
+     e、CallServerInterceptor， 执行真正的网络请求
    
 六、项目
 
@@ -1267,20 +1339,32 @@
    1、 启动页做了优化， 延时加载， 就是通过这个idlehandler来实现的， 通过返回值等于false表示只执行一次， 返回true就表示可以无限次数的执行；
    2、 首页数据做了缓冲，本地file和sp缓冲；
    3、 详情页做了预加载；
-   4、 详情页做了接口拆分，领先借口和别的接口；
+   4、 详情页做了接口拆分，领先接口和别的接口；
    5、 页面无网和无数据默认图做了统一的sdk来处理；支持actiivty和fragment；
    6、 数据埋点做了优化，加了缓冲埋点， 条数到达多少条后才缓冲，减少网络请求次数；
    7、 title栏做了统一， 所有页面用同一个view；
-   8、 push推送做了统一处理， 外层统一封装一层借口， 使得外部调用统一，即使将来添加新的第三方推送的sdk，客户端修改的工作量不会太大；
-   9、 组件化架构升级， 降低藕合度。 模块间跳转以及数据获取通过接口来实现； 定义一个单例类， 通过hashmap来保存所有的接口和实现类， 而在每个moudle中把这个单例类传进去， 这样所有的模块就都可以访问到这些实现以及他们的接口方法了；
-map<string, IPlugin> key值是通过tag和借口类class生成的；
-   10、通过加入aspectj 面向切面编程技术解决类似登陆相关的问题； 在连接点函数before之前加入函数判断来说明函数的解析；
-   11、通过自定义本地unCaughtExceptionHandler， 通过调用setUnCaughtExceptionHandler来拦截异常，并保存到本地文件夹，方便后续拿到log日志来定位问题；主要是在测试阶段使用。
-   12、dplink制定统一的协议， 来解析web请求；
-   13、sp文件进行拆分， 尽量不要sp文件太大， 慎用sp。commit和sp。applay，commit是写入磁盘， apply是写入内存，多用apply，少用commit；
-   14、规范线程安全的实例对象写法，埋点sdk在加入rn线程后出现崩溃问题；
+   8、 push推送做了统一处理， 外层统一封装一层接口， 使得外部调用统一，即使将来添加新的第三方推送的sdk，客户端修改的工作量不会太大，而需要sdk加入新的sdk即可；
+       备注：用到了外观模式和策略模式
+	   
+   9、 组件化架构升级， 降低藕合度。 模块间跳转以及数据获取通过接口来实现； 定义一个单例类， 通过hashmap来保存所有的接口和实现类， 而在每个moudle中把这个单例类传进
+       去， 这样所有的模块就都可以访问到这些实现以及他们的接口方法了；map<string, IPlugin> key值是通过tag和借口类class生成的；
+	   
+       最后加入了美团WMRouter
+	   
+   10、通过加入AspectJ 面向切面编程技术解决类似登陆相关的问题； 在连接点函数before之前加入登陆判断的逻辑；
+
+   11、通过自定义本地unCaughtExceptionHandler， 通过调用setUnCaughtExceptionHandler来拦截异常，并保存到本地文件夹，方便后续拿到log日志来定位问题；主要是在测试阶段使
+       用。
+	   
+   12、制定统一的dplink协议， 来解析web请求；
+   
+   13、sp文件进行拆分， 尽量不要sp文件太大， 慎用sp.commit和sp.applay，commit是写入磁盘， apply是写入内存，多用apply，少用commit；
+   
+   14、规范线程安全的单例对象写法，埋点sdk在加入rn线程后出现崩溃问题；
+   
    15、数据库升级，原先使用dbutils，升级为room（google公司推出的针对android的orm关系型数据库），orm数据库就是将对象和表做了关联，不需要手动创建表，减少了开发成本，提高
-   了工作效率。
+       了工作效率。
+   
    16、动画库做了统一。选择了lottie作为动画库，为什么选择它？
        1）支持跨平台， android、ios、rn、web
 	   2）动画文件是json格式，占用控件较小
@@ -1305,6 +1389,8 @@ map<string, IPlugin> key值是通过tag和借口类class生成的；
 	  vivo推送的首条消息被系统智慧云消息给拦截，经沟通需要添加白名单
 	  小米、华为部分机型收到推送消息打不开，原因为收到消息内容为乱码
    
-   
+
+  
+  
    
    
