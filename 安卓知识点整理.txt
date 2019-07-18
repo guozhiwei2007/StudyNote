@@ -1,0 +1,1310 @@
+安卓知识点整理
+
+一、安卓（基础篇）：
+1、UI相关
+   1） 如何获取view的宽高度
+       a、根据生命周期onWindowChanged来实现
+	   b、监听viewtree是否绘制完成，通过ViewTreeObservable来监听
+	   c、通过idleHandler来监听，当所有事件都处理完毕后，会触发idlehandler的回调
+	   
+   2） 如何做布局相关的优化（主要是通过减少view的层级）
+       a、采用viewstub、include来减少view的层级
+	   b、采用merge来减少层次
+	   c、采用约束布局
+	   
+   3） UI适配问题
+       a、android推荐使用dp来直接适配UI。
+		  那么什么是dp？dp指的是设备独立像素，以dp为尺寸单位的控件，在不同分辨率和尺寸的手机上代表了不同的真实像素，比如在分辨率较低的手机中，可能1dp=1px,而在分辨率较高
+		  的手机中，可能1dp=2px，这样的话，一个96*96dp的控件，在不同的手机中就能表现出差不多的大小了。那么这个dp是如何计算的呢？  我们都知道一个公式： px = dp(dpi/160) 
+		  系统都是通过这个来判断px和dp的数学关系。
+		  
+		  一般情况下,相同分辨率的手机, 其dpi是一样, 但是有些手机比较特殊, 这就导致了, dp适配不能100%得到完美适配.
+		  
+		  dpi是像素密度，指的是每英寸上的像素点数，它往往是写在系统出厂配置文件的一个固定值。
+          缺陷：
+		  （1）只能适配90%的机型，因为有些机型在同样的手机分辨率下，其dpi不相同
+		  （2）无法快速的把ui设计图实现到布局文件中
+		  
+		  根据px = dp(dpi/160)的计算结果可以看出, 只有当dpi = 160的时候, 1px = 1dp, 经查看, dpi = 160对应的是mdpi这个尺寸.  对应的分辨率是320*480.  对应的表格如下:
+		  
+		  密度         ldpi      mdpi     hdpi      xhdpi       xxhdpi
+		  密度值       120       160      240        320         480 
+		  分辨率     240*320   320*480  480*800   720^1280     1080*1920
+		  
+	   b、宽高限定符适配
+	      就是穷举市面上所有的Android手机的宽高像素值：
+		  设定一个基准的分辨率，其他分辨率都根据这个基准分辨率来计算，在不同的尺寸文件夹内部，根据该尺寸编写对应的dimens文件。
+		  
+		  缺陷：
+		  那就是需要精准命中才能适配，比如1920x1080的手机就一定要找到1920x1080的限定符，否则就只能用统一的默认的dimens文件了。而使用默认的尺寸的话，UI就很可能变形，
+		  简单说，就是容错机制很差。
+		  
+	   c、smallestWidth适配
+	      其原理和上面的宽高适配类似，它们最大的区别在于，前者有很好的容错机制，如果没有value-sw360dp文件夹，系统会向下寻找，比如离360dp最近的只有value-sw350dp，那么
+		  Android就会选择value-sw350dp文件夹下面的资源文件。这个特性就完美的解决了上文提到的宽高限定符的容错问题。
+		  
+		  推导:1080px的手机对应的dp为多少? 
+		  1080 = dp(480/160) => dp=360
+
+	   备注：参考资料链接：https://www.jianshu.com/p/a4b8e4c5d9b0?tdsourcetag=s_pcqq_aiomsg
+   
+
+2、动画相关
+   1） 动画的分类
+       a、视图动画，不会改变view的属性
+	      常见的位移、旋转、缩放、透明度
+	   b、帧动画
+	      原理：将动画拆分成桢的形式，每一帧=每一张图片，逐桢播放就是按序播放一组事先定义好的图片集合。
+		  缺点：因为涉及到很多的图片，容易造成OOM。
+	   c、属性动画
+	      原理：
+		  （1）设置初始状态和结束状态；
+          （2）给定变化趋势（插值器和估值器）；
+          （3）每次变化后通过调用invaluate（）来重新绘制view，达到刷新的目的；
+
+   t2）插值器和估值器的差异？
+       他们都是描述view的运行轨迹,一般情况下,插值器用系统的就基本可以满足了. 常见的就哪几种。 加速、减速、先加速后减速、先减速后.
+	   估值器重新实现的比较多，横竖坐标和时间的关系。
+
+3、touch事件相关
+   1)  touch事件时间分发、事件拦截和事件处理三部分，对应的接口是dispatchTouchEvent、 onInterceptTouchEvent、onTouchEvent三个， 其中onInterceptTouchEvent只有ViewGroup
+       才有。
+   
+   2） 给指定View同时设置了touch时间和click时间，那个先被执行？
+       touch先执行
+	   
+   3） 梳理touch事件？
+       其中ViewGroup的dispachTouchEvent中会先调用onInterceptTouchEvent函数判断事件是否被拦截， 如果拦截， 则event不继续往下传， 调用他的ontouchevent来处理消息；
+	   然而view的dispathTouchEvent直接就调用了view的ontouchevent中去了。
+	   
+       a、没有设置click事件
+	   touch有MotionEvent_down  MotionEvent_move  MotionEvent_up， 如果down时间返回true， 才会执行move和up。 如果down返回了false，则消息继续往上传递。
+	   
+	   b、设置了click事件
+	   down返回了true， move和up都会执行。 但是onclick不会被执行。 如果down返回了false， 则move和up和onclick都会被执行。
+
+4、自定义view
+   1）VIEW的测量模式有哪几种？
+       有四种测量模式
+
+	   unspecified, （无限制）父容器对子容器大小没有限制，要多大给多大
+	   at_most：（最大模式）父容器限制了子容器的大小，最大为多少
+	   exactly：（精准模式）父容器明确知道子容器的大小， 确切值
+
+	   对于view来说
+	   exactly精准模式就对应于match_parent
+	   at_most最大模式就对应于wrap_content
+	   unspecified无限制表示没有限制模式
+
+	   mesurespec是一个int整形32位表示的int数字， 前两位表示mode， 后30位表示大小
+	   int measureSpec=MeasureSpec.makeMeasureSpec(size, mode)，通过size和mode生成新的measureSpec
+	   setMeasuredDimension设置view的长宽
+	   
+5、UI绘制, 屏幕刷新机制?
+   1)丢帧一般是什么原因引起的?
+     一般是主线程有耗时操作, 导致ui没有办法及时绘制 .
+   
+   2)android刷新频率是60桢/秒, 每隔16ms会调onDraw绘制以此吗?
+     不是的, 因为onDraw是由用户主动发起的,  及时没有16ms调onDraw, 屏幕也会每隔16ms刷新以此, 只是数据不变(屏幕每隔16ms会有个vsync脉冲信号), 
+	 
+   3)onDraw完毕后屏幕会马上刷新吗?
+     不会马上刷新, 会等到下一个vsync信号来临才会刷新 
+	 
+   4)如果界面没有重绘, 还会每隔16ms刷新屏幕吗?
+     会的, 屏幕每隔16ms会有个vsync脉冲信号, 就会刷新屏幕
+	 
+   5)如果在屏幕快要刷新的时候才去绘制会丢帧吗?
+     不会的, 每次绘制,  Chrography都会向SurfaceFlinger申请下一次vsync请求, 只有下一个vsync请求过来时, 才会刷新的.
+
+   surface跨进程传递原理
+   1) 怎么理解surface, 他是一块buffer吗?
+   不是,他是一个坑子, 它包含了一个能生成buffer的独享
+   
+   1)如果是, surface跨进程传递怎么带上这个buffer?
+   
+   3)如果不是,那么surface跟buffer又是什么关系?
+   传递graphicBufferProducer对象
+  
+   4)surface到底是怎么款进程传递的?  
+
+5、内存优化
+   1）按设备等级划分，做出不同的策略；比如低配的手机设备，去掉一些复杂动画和特效，图片用低分辨率的。
+   2）bitmap优化，一般内存不足，是由于java内存不足导致的， 我们可以通过申请native内存空间，来增加内存占比。还可以通过android lint工具来检测重复的图片资源和无用图片资
+      源；
+   3）内存能复用就复用。
+      范例：线程池、连接池；
+	        listview的contentView的view复用
+			Message.obtain（）的message复用
+			
+   3）防止内存泄漏。通过leakcanary、android monitor以及android profiler来自动检测
+      a、常见的内存泄漏都有哪些？
+	     （1）handler造成的内存泄漏，
+		      解决方案：handler设置成静态内部类，静态内部类不持有外部类的引用；
+			            activity退出前，调用handler.removeCallbackAndMessage(null);
+						
+		 （2）mvp使用不当，也会造成内存泄漏。因为presenter持有view的引用
+		      解决方案：把对view的引用设置成弱引用，activity在ondestory生命周期函数里面把view的应用设置成null，如果当前存在网络请求，也一并将网络请求中断；
+		 （3）匿名内部类持有外部类的引用（强引用），造成的内存泄漏。比如handler、内部线程类
+		 （4）Context造成的内存泄漏。
+		      解决方案：使用Application类的context，即使用this.getApplicationContext()。
+			  备注：this.getApplicationContext（）取的是这个应 用程序的Context，Activity.this取的是这个Activity的Context，这两者的生命周期是不同的，前者的生命周期是
+			  整个应用的生命周期，后者的生命周期只是它所在的Activity的生命周期。
+		 （5）文件打开没有关闭，数据库cursor没有关闭，网络流没有关闭，广播register后,没有unregister等。
+		 
+		 备注：泄漏的主因：长生命周期的的对象持有短生命周期的对象的引用。导致短生命周期结束时，内存不能被回收。还有就是需要成对出现的，然并卵。
+		 
+   4）内存分析工具
+         android monitor/android profiler
+		 Heap Viewer
+		 Allocation Tracker
+		 MAT
+		 MAT 是一个快速，功能丰富的 Java Heap 分析工具，通过分析 Java 进程的内存快照 Hprof 文件，从众多的对象中分析，快速计算出在内存中对象占用的大小，查看哪些对象
+		 不能被垃圾收集器回收，并可以通过视图直观地查看可能造成这种结果的对象。
+		 
+		  
+   5）native内存泄漏？
+       
+		 
+		 
+6、性能优化
+   1）卡顿优化
+      a、优化方案
+		 不要在主线程中执行耗时操作，比如网络访问和大文件IO操作
+		 绘制UI时，尽量减少UI层级，减少不必要的嵌套VIEW
+		 删除无用布局属性
+		 布局复用
+		 尽量避免过度绘制OverDraw
+
+	  b、辅助工具类
+	     Profile GPU Rending， 有一条16ms的绿线，确保都在16ms绿线以下
+		 Debug GPU OverDraw， 每一个view被标注上颜色，根据颜色值可以可以是否被过度绘制
+
+   2）耗电优化
+      a、方案：
+	     合理使用wake_lock锁
+	     集中处理一些网络请求，比如埋点，非实时埋点，缓存起来达到一定的条数之后一起上报
+		 计算优化，避免浮点运算
+		 数据在网络上传输时，要压缩后在进行传输，建议用FlatBuffer做序列化,他比json性能要好太多
+		 程序切换到后台的时候, 让某些线程停止工作
+		 
+	  b、工具：
+	     Battery Historian
+		 
+   3）安装包体积优化
+      a、方案：
+	     只是用一套图片，高分辨率的图片
+		 使用tinypng对图片做无损压缩
+		 android lint工具检测无用的代码和资源，并删除
+		 移除无用的依赖库
+		 动态下载资源, 比如一些动画的资源文件, 采用从服务器下载的方式
+		 某些独立模块做插件化开发
+		 
+   4）内存优化
+      见上
+   
+   5）稳定性优化
+      a、方案
+	     提高代码开发质量，代码审核
+		 代码静态扫描工具，通常用的有Android lint 、Findbugs、Checkstyle、PMD
+		 通过集成腾讯bugly、听云等第三方sdk，收集线上bug，不断修复
+		 
+   6）启动速度优化
+      方案：
+	      抽离不必要的业务逻辑，延迟加载
+		  在Application在启动子线程，做一些初始化，比如一些第三方sdk(推送sdk)的初始化等
+		  引入IdleHandler，在主线程的handler对应的Looper中的消息队列中没有消息的时候, 就会触发其回调函数, 可以在这个回调函数中执行一些操作
+		  尽量避免做IO操作，网络请求，abtest做SP缓存， 存在的情况下，就不做请求
+		  
+   备注:参考资料链接:https://www.jianshu.com/p/d71b51a0e29f
+
+
+7、handler相关
+   1） 子线程能否创建handler，怎么创建？
+       因为每个线程都会有个Looper，但是子线程默认情况下是没有启动Looper的，所以需要执行如下步骤才可
+	   Looper.prepare（）
+       new Handler(Looper.mylooper());
+	   Looper.loop（）
+	   思维扩展： 如何让handler发送、处理消息在自己的线程中， 在子线程中创建handler，类似的.
+
+   2） looper。loop是while（1）死循环，为什么主线程没有被耗死？handler是如何做到在指定的时间点做消息处理的？
+       handler在创建的时候，会指定对应的looper，looper中有一个messagequeue消息队列，当队列中没有消息要处理的时候，处于阻塞状态，此时并不占用cpu。当有消息发送的时候，
+	   底层会向管道的写端写消息，此时读端就会收到信号（pipe+epool，epool来监听pipe的读端，如果有，就会唤醒cpu），开始读取。取出消息后，他会判断当前消息的执行时间有没
+	   有到， 没有的话，他会发送一个延时消息（延时=发送时间-当前时间），在延时时间过后，会再次收到消息， 此时正好就是消息处理时间。
+
+   3） Looper中的消息队列messagequeue中的message是如何来管理的？
+       message本身是用链表来实现的队列，当调用message.obtain()后，会从MessageQueue中取出一个消息，当消息被handlemessage执行后，该message消息会重新入链表。做到了消息的
+	   复用,属于内存优化的一种.
+	   
+   4） messageQueue中的消息，是基于什么进行排序的？
+       是基于时间来进行排序，每次发送消息的时候，messagequeue得到消息后，会根据消息的时间把消息插入到指定的位置。这样就能保证每次取消息的时候，都能取到最前面的消息。
+	   
+
+8、binder机制
+   1） binder机理是什么？
+       涉及Client、Service、serviceManager以及binder驱动。
+	   servicemanager相当于是dns， binder驱动相当于是路由器， server为client提供服务， 但是相对servicemanager来说是客户端。 
+       servicemanager的binder通过0号句柄获取，这样所有的server都能访问到servicemanger。 server首先向servicemanager注册（key－value键值对，名称和binder对象）， 
+	   这样servicemanger中就有了该server的binder引用。 client通过名称在servicemanager 中获取到server的binder引用， 然后就可以获取server的服务了。 
+
+   2） 相比较别的传统进程间通讯方式，binder的优势的什么？ 他是如何做到的？
+       性能更好，只需要一次内存拷贝，
+	   更安全，系统底层做身份校验，再有就是应用级别的service是没有办法注册到servicemanager中的。具体哪些服务是在init。rc文件中注册的。可以这么理解安全这个问题. 因为
+	   没有办法篡改系统服务,  因为只有在底层配置文件init.rc中配置的服务才能被注册到ServiceManger中. 就保证服务的稳定性. 
+	
+
+8、包体积优化
+   使用lint检测无用资源
+   扫描无用的类
+   使用一套布局文件，xhdpi资源文件
+   tinypng对图片进行压缩
+   resguard进行打包
+   
+9、app加固的问题
+
+
+10、android系统新特性
+   1）各个版本的新特性：
+	  5.0新特性
+	  6.0新特性
+	    动态权限
+	  7.0新特性
+	    分屏功能
+	  8.0新特性
+	    后台服务受限，广播受限，画中画
+	  9.0新特性
+	    刘海设计、material design、全部使用https
+
+   2）target26升级遇到的问题？
+      a、为什么是26？
+	     因为国内android应用市场要求在2019年5月1日前将targetSdkVersion升级到26，否则会拒绝提交应用市场。
+      a、技术选型
+	     EasyPermisson开源库，考虑的原因主要有，库不大，接入比较简单，成本较低，而且基本能满足现有的需求，开源库有专门的团队在维护
+	  b、遇到的坑
+	  （1）通知栏不显示的问题，android8.0版本引入了渠道通知。
+	       解决方案：根据系统版本引入渠道id的概念
+		   
+	  （2）隐式广播限制（静态广播不可用）
+	       解决方案：android8.0对广播做了限制，会持续消耗系统资源，可以采用动态注册的方式接受广播
+
+	  （3）权限需要动态申请
+	       解决方案：EasyPermission开源库
+
+	  （4）相机拍照崩溃的问题，android7.0版本引入私有目录被限制访问的"STRICTMODEAPI"政策，可以用FileProvider来解决这个问题。
+	       解决方案：1、在AndroidManifest.xml文件中配置provider
+		             2、指定共享文件的目录，需要在res目录下配置xml目录，并且创建对应的文件
+					 3、就可以正常访问该共享文件了
+
+	  （5）SharePreference的MODE_WORLD_READABLE（指定这种模式后，该sp能被其他应用读）和MODE_WORLD_WRITABLE模式被废弃
+	       解决方案：修改成MODE_PAIVATE
+	  （6）8.0版本升级后无法跳转到对应的安装页面，8.0强化了权限管理
+	       解决方案：
+	  （7）解析包安装失败
+	  （8）悬浮窗权限SYSTEM_ALERT_WINDOW不能通过代码来申请，
+	       解决方案：6.0版本及以上需要先判断该权限有没有被开启，没有则跳转到setting页面进行开启
+	  （9）升级后，悬浮窗不显示的问题
+	       解决方案：默认类型为TYPE_SYSTEM_ALERT，修改成TYPE_APPLICATION_OVERLAY就好了。 
+	  
+	  备注：参考资料连接地址：https://www.jianshu.com/p/c533fb37cb59
+   
+   
+11、其他
+   1) 动态广播和静态广播谁先被执行？
+      动态广播的优先级比较高，所以先被执行
+
+   2）有序广播
+	  有序广播的接收者们将按照事先申明的优先级依次接收，数越大优先级越高（取值范围：-1000~10000），优先级可以声明在<intent-filter android:priority="n".../>，也可以调
+	  用IntentFilter对象的setPriority设置。并且接收者可以终止传播（调用abortBroadcast()方法即可终止），一旦终止后面接收者就无法接受广播。另外，接收者可以将处理结果存
+	  入数据（可通过setResultExtras(Bundle)方法将数据存入Broadcast），当做Broadcast再传递给下一级接收者（可通过代码Bundle bundle = getResultExtras(true)获取上一级传
+	  递过来的数据）。
+
+	  范例：比如短信拦截系统，就是通过有序广播，通过设置优先级先收到广播后，中止广播继续向下发送，来达到短信拦截的目的。
+
+   3）为什么会发生ANR?
+      因为activity的生命周期、绘制和刷新等都是在主线程中处理的？ 所以系统会给每条消息指定的处理时间。 如果在指定的时间内，消息没有处理完，就会触发appNotResponse逻辑，
+	  弹出anr弹框。实现机制是在每次发送消息时，都会通过handler发送一条延时消息， 当消息执行完毕后， 会把该延时消息remove掉。 反之延时消息会触发anr弹框逻辑.
+	  
+   4) 进程保活策略?
+      首先当app进程切换到后台的情况下, oom_adj值会变大, 就有可能被系统进程(low memory killer进程)杀死.  进程的oom_adj值越小, 表明进程优先级越高, 越不会被杀死.  一般
+	  采取的策略是, 当应用进程处于后台时, 启动service, 并设置service设为前台进程, 并开启一个高度为1pix的notification. 来播放一段没有声音的音频数据。避免被杀死,
+	  但是这并不是万能的. 
+	  
+	  注意: 当手机系统的内存不足的情况, 就会频繁的触发lmk进程杀死进程, 根据进程占用内存的多少来选择杀死那些进程, 所以在开发过程中首先要尽可能节省内存, 当系统切换到后
+	  台时, 释放一些不必要的内存。
+	  
+	  除此之外, 还有双进程保活法, 彼此检测对方是否被杀死. 如果被杀死, 就重新创建进程.  两个进程彼此如何识别被杀死,  则是一个问题.  父子进程, 子进程被杀死后, 会向父进
+	  程发送一个SIGCHLD信号.
+	  
+	  备注：关注一下alarmmanager
+	  
+	  进程复原后，如何还原之前的数据？
+	  关键数据做数据库实时更新，当进程被杀死重启后，读取数据库还原现场数据。
+	  
+   5) 应用进程的内存在后台会不会被回收?
+      严格来说是不会被回收, 但是系统内存不足的情况下, 触发lmk机制, 杀死进程, 最终会被回收. 
+	  
+   6) Object类的方法都有哪些?
+      tostring（）、hashcode（）、equals（）等方法
+      finalize（）、clone（）、 wait（）、 notify（）、notifyall（）方法
+	  
+   7) 你所了解的安卓控件都有哪些坑?
+      AsyncTask最多支持128条消息,所以需要自定义消息队列
+	  AsyncTask默认并不是并行执行的, 而是顺序执行的
+
+   8）ThreadLocal关键字的理解
+      被threadlocal修饰的变量，在每个线程中都会有一份，相当于每个线程中都有这么一个变量，作用是提高了性能，但是额外占用了空间。如果所有线程共同维护一份的话，需要上锁，
+	  效率低。
+	  范例:Looper
+
+   9）mvp的缺陷
+      a、会造成类的数量的增多，每个使用它的activity，都会创建相应的接口和实现类。
+	     解决方案:采用泛型, 定义统一的接口类,  每个业务都实现这个接口类即可. 
+		 
+	  b、使用不当有可能会造成内存泄漏（presenter会持有view的实力对象）
+	  
+   10）线程的同步和互斥是如何实现的？
+      a、线程同步在linux下使用wait和notify来实现的.
+	  b、线程互斥是使用synchronized关键字来保证的，它的内部原理也是通过上锁lock()来实现的
+	  
+	  
+   11）volatile关键字的作用
+      保证了可见性和有序性
+	  有序性是防止编译器做优化（指令重排），保证了顺序的执行，防止结果不正确
+	  可见性是一个线程修改了该变量，会立刻同步到主内存和别的工作内存
+
+	  volatile关键字能保证操作的操作的有序性，但不能保证操作的原子性，所以适合的场景是一个线程写，多个线程读。
+	  缓存一致性协议就是表示当一个线程修改一个变量的时候，如果发现这个变量是共享变量，就通知其他cpu，这个缓存变量失效。 所以当其他线程操作该变量的时候，需要从主存中读
+	  取。
+
+	  涉及到主内存和工作内存中的数据同步，如果不添加valatile关键字修饰的话，没有办法保证数据及时同步
+	  另外，加入volatile就是为了防止重排序，一个对象的创建过程包括如下几个步骤：
+	  1.分配对象的内存空间
+	  2.初始化对象
+	  3.设置instance指向刚分配的内存地址
+	  当instance指向分配地址时，instance不为空
+	  但是，2、3步之间，可能会被重排序，造成创建对象顺序变为1-3-2.所以需要加入volatile关键字防止指令重排
+
+	  编译器为了提高效率，做了指令重排操作。所以不保证cpu执行的顺序和代码本来的顺序是一致的。 但是他会保证执行结果是一致的。
+	  要想并发程序正确的执行，必须保证原子性、可见性和有序性。
+	  synchronized和lock保证了原子性， volatile保证了有序性和可见性。volatile禁止指令重排，保证有序性。
+	  
+	  transient关键字的作用：
+	  transient修饰的字段不会被序列化，比如一些敏感字段（银行卡账号和密码）不在网络中传输，只能被写入到内存中，不能被写入磁盘中持久化。
+
+	  
+   12）现在主流的网络框架retrofit中，为什么要使用rxjava
+       a、线程间切换
+	   b、代码看起来更加简洁
+	   
+	   弊端：出现了问题，比较难与定位，需要使用的人，对其掌握熟练
+
+   13）实现一个系统，上报java层的崩溃log
+       调用setUncaughtExceptionHandler，通过其回调函数uncaughtException来采集崩溃信息，并上报给服务端
+	   
+   14）如何解决native层的内存泄漏
+   
+   15) 常见的加密算法都有哪些？
+       a、对称加密
+	      AES, DES, 3DES
+		  
+	   b、非对称加密
+	      RSA, 目前最有影响力的 公钥加密算法
+		  ECC, 安全级别更高, 但是加密和解密耗时长
+	   
+	   c. 散列加密算法
+	      SHA1, 安全级别高, 速度慢
+	      md5, 输入任何长度的字符串, 输出128bit的字节, 即16个Byte. 安全级别中, 速度快 .
+   
+   15) 如何做数据加密
+       做数据加密，先做一层md5不可逆加密，在做一层可逆的加密算法，传输的就是经过二次加密后的数据。服务器拿到数据后，做一次解密，然后把md5加密数据保存进数据库，这样即便
+	   在传输过程中可逆加密被破解了， md5加密的数据也不可能被破解。是拿不到用户的明文信息的。
+	   
+   16）android常见的异常类型都有哪些？
+       NullPointerException、OutOfMemoryException、ClassCastException、ArrayOutOfIndexException、ClassNotFoundException、unKownException、SecurityException、算符异常
+	   
+   17）SP的apply和commit的区别是什么？
+       apply是把数据写到内存，commit是把数据写到磁盘，尽量多的applay，commit一次即可。
+	   
+   18）android系统进程都有哪些？
+       a、init进程
+	   b、zygote进程
+	   c、systemserver进程
+	   d、mediaserver进程
+	   
+   19）为什么有了thread，还有在弄个service呢？
+       a、service要比thread更易于管理；
+	   b、当app处于后台的情况下，如果此时有个后台线程在进行任务操作， 很有可能会被系统lmk杀死，反之， service可能通过提升应用为前台进程，来弱化被系统lmk杀死的可能。
+	   
+   20）service的startService和bindService的区别和联系？
+       a、他们的生命周期不同，分别是onCreate、onStartCommand、OnDestory和onCreate、onBind
+	   b、多次调用startService后，也只会创建一个service的实例，只需要调用一次stopService即可停止该service。
+	   c、startService启动的service，必须调用stopService后，service才可以退出， 而bindservice启动的service，退出方式有两种，一种是调用unbindservice，一种是调用bindservice
+	   的activity退出。
+	   
+   21）binder进程间通讯之aidl（面向接口定义语言）
+   
+   22）BroadcastReceiver的onReceiver方法中创建了一个thread，会有什么问题？
+       这属于内部类的问题, 内部类持有外部类的引用.  当Receiver生命周期走完的时候, thread没有退出, 就有可能造成Receiver内存泄漏 .
+   
+   23）刚接手一个项目，其中存在了内存泄漏，如何定位泄露在哪里？
+     a、leakcanary
+	 b、3.0之前用android monitor， 3.0以后android profiler工具
+	 
+   24）当app按home键处于后台时，会不会会系统回收掉？
+     有可能会的。当app处于后台时，此时app进程会从前台进程转变成后台进程，优先级会被降低，当系统内存不足时，触发系统lmk机制，杀死app进程。进而回收掉内存。
+   
+   25）android系统的lmk机制？
+      lmk是android对系统处于低内存情况下，为了保证系统能够正常运行，而采取的一种措施。一般情况下， 进程的oom——adj越小，表明系统的优先级越高，越不容易会杀死。而进程所
+	  占内存的大小是一个很重要的考量因素。
+	  
+   26）SharePreference的特点？
+      跨进程不安全，读写慢，全量写入，卡顿（系统广播，onPause时候会落地到磁盘）, android7.0后, 完全不支持跨进程了.  
+	  
+	  备注：微信的MMKV对其进行了优化
+   
+   27）ContentProvider的特点：
+      跨进陈安全，适合大数据传输（里面用到了共享内存和binder，binder只是传递共享内存的文件描述符）。当数据量比较小时，使用共享内存就不划算了。他里面有个CallBack，就是
+	  通过binder来传输的。
+
+   28）序列化
+      a、对象序列化
+	    serializable，性能较差，用到了大量的反射和递归调用
+		parcelable，只会在内存中进行序列化，不会用反射来进行序列化和反序列化，也不会存储到磁盘，性能会更好
+		serial，twitter的开源库，结合了前面两者的优点。序列化和反序列化都要优，文件也要小
+	  b、数据系列化
+	    json
+		fast json
+		protocol buffer
+		flat buffer
+
+   29）数据库
+      realm、levelDB 、WCDB
+	  orm关系型DB, 有greenDao和room
+	  
+	  优化：常见的有优化索引，提高查询效率
+	  
+	  数据库损坏的原因：
+	  a、内存不足。图片设置数据有效期，当超过天数后，自动删除数据。如微信聊天记录中的图片。为了避免写操作时，内存不足的问题，可以给系统提前预留足够的内存。
+	  b、系统突然断电。解决方案就是每次写操作都要落地到磁盘。
+	  c、文件sync同步失败。master表做主从备份，为了防止主从表都被破坏，做双重备份，每次sync时，取老的表或破损的表做备份。
+	  
+	  sqlite数据库中都有哪些锁？
+	  SHARE（共享锁）、RESERVE（保留锁）、PENDING（未决锁）、EXCLUSIVE（排他锁）
+	  多个读操作可以同时拥有共享锁。需要写操作时首先要获取保留锁，开始数据库写入操作， 但是此时只能在内存中操作，不能入库，此时别的线程只能进行读取数据库操作，不能写
+	  操作。等需要入库的时候， 把锁升级成未决锁， 此时别的线程不能进行新的读操作， 原有未读的操作可以继续操作。等所有读操作完成之后， 未决锁就可以升级成排他锁。此时
+	  开始入库操作。 别的线程的读、写操作均不可以执行了。直到入库完成，释放锁。此时别的写线程可以开始竞争保留锁。
+
+   30）object类常见的方法都有哪些？
+      tostring（）、hashcode（）、equals（）等方法
+      finalize（）、clone（）、 wait（）、 notify（）、notifyall（）方法
+	  
+   31）软应用和弱引用
+      软应用：SoftReference<Bitmap> sr = mBitmap，特点是只有当gc时并且内存不足的时候，才会被回收。
+	  弱引用：WeakReference<Bitmap> wr = mBitmap，特点是只要在gc的时候，就会被回收。
+	  
+	  使用场景：
+	  软应用： 缓存
+	  弱引用：
+
+	  二者如何选择?
+	  一般情况下, 如果变量在内存中存活时间比较长的话, 就用弱引用
+	  还有，如果使用频率比较高的话，就用弱引用
+
+	  备注：为了有效避免内存泄漏的问题，我们要多用弱引用和弱引用。
+   
+   32）android数据存储方式都有哪些？
+      a、SP存储
+	  b、File存储
+	  c、SQLite存储
+	  d、ContentProvider存储
+	  e、网络存储，存储到服务器
+	  
+   33）app签名文件都有哪些内容
+   
+   34）实时监控手机cpu，开源Emmagee
+      a）介绍：
+	     他是一款实时监控指定应用在使用过程中占用机器的cpu、内存、流量资源的性能测试小程序
+		 
+   35）activity在onStart方法中执行力finish操作，会走哪些生命周期函数？为什么？
+   
+   36）现在接手一个新项目，如何搭建框架？
+   
+   37）查看当前正在运行的activity是那个？
+       a、adb shell dumpsys activity activities | grep "Run"
+	   b、adb shell
+	      logcat | grep ActivityManager
+	   
+   38）当启动Activity a， 然后在a中启动Activity b，然后b返回， 其中a、b的生命周期函数是如何被执行的？
+       a、启动a
+		   a。onCreate
+		   a。onStart
+		   a。onResume
+	   
+	   b、a启动b
+		   a.onPause
+		   b.oncreate
+		   b.onStart
+		   b.onResume
+		   a.onStop
+		   
+	   c、b返回a
+	       b。onPause
+		   a。onRestart
+		   a。onStart
+		   a。onResume
+		   b。onStop
+		   b。onDestroy
+		   
+	   d、继续返回
+	       a。onPauses
+		   a。onStop
+		   a。onDestroy
+		   
+   39）onStop生命周期函数什么情况下不会被执行？
+       a、当activity的theme主题被设置成dialog的时候，不会被执行。因为该activity不会处于不可见状态。
+	   b、当activity被lmk杀死的时候，也有可能不会被执行。
+	   
+   40）recycleView使用不当会造成OOM？为什么？
+       探探技术二面，关键点在于每个itemView不能太大，占用太用的资源。 海量数据、 数据多少不确定， 有可能很大。 这些都是敏感字眼。 
+	   
+   41）为什么内部类使用的外部变量都必须用final修饰符？
+       因为生命周期的原因。方法中的局部变量，方法结束后这个变量就要释放掉，final保证这个变量始终指向一个对象。首先，内部类和外部类其实是处于同一个级别，内部类不会因为
+	   定义在方法中就会随着方法的执行完毕而跟随着被销毁。问题就来了，如果外部类的方法中的变量不定义final，那么当外部类方法执行完毕的时候，这个局部变量肯定也就被GC了，
+	   然而内部类的某个方法还没有执行完，这个时候他所引用的外部变量已经找不到了。如果定义为final，java会将这个变量复制一份作为成员变量内置于内部类中，这样的话，由于
+	   final所修饰的值始终无法改变，所以这个变量所指向的内存区域就不会变。 
+   42）冷启动耗时统计
+       adb shell am start -S -W 包名/启动类的全限定名
+	   范例：adb shell am start -S -W com.example.moneyqian.demo/com.example.moneyqian.demo.MainActivity
+	   
+   43）broadcast的onReceive方法中创建一个线程会有什么问题没？
+       属于匿名内部类的问题，持有外部类BroadcastReceiver的强引用，由于BroadcastReceiver生命周期比较短暂，若onReceiver生命周期函数执行完毕后，广播应该就会被销毁，但是
+	   如果此时线程没有退出，就会导致BroadcastReceiver内存泄漏。
+	   
+   44）当个activity的app是如何实现的？
+   
+   
+12、adb命令小结
+   1）启动、停止adb服务
+      adb start-server
+      adb kill-server
+
+   2）查看哪些设备连接上电脑
+      adb device -l
+
+   3）连接局域网内某一台设备
+      adb connect 192.168.xx.xx:5555  （默认端口号是5555）
+
+   4）安装、卸载app
+      adb install -r test_audio.apk
+      adb uninstall com.test.audio
+
+   5）文件操作
+      adb pull /mnt/sdcard/output.wav ./output.wav
+      adb push input.wav /mnt/sdcard/input.wav
+   
+   6）查看日志
+      adb logcat   //查看log日志
+      adb logcat -c       //清空log日志
+      adb logcat -s "AudioEncoder | AudioDecoder"   //过滤多个字符串
+	  
+   7）过滤某个进程的日志信息
+      adb logcat --pid 20416
+	  
+   8）运行shell命令
+      adb shell "ps | grep com.test.audio"   //之查看报名为com。test。audio的进程的信息
+	  adb shell "cd /mnt/sdcard; ls -l | grep wav"   //进入/mnt/sdcard目录，列出所有wav文件
+	  adb shell dumpsys meminfo com.test.audio    //dump出包名为com.test.audio进程的内存占用信息
+	  
+   9）
+
+13、Ndk工具详解
+  1）利用readelf命令输出动态so库中的所有函数
+  2）利用objdump命令将so包反编译为实际的代码
+     指令如下:
+	 ./arm-linux-androideabi-objdump -dx libMemoryLeak.so > stacktrace.txt
+	 打开这个stacktract.txt,是这个动态so库的符号表信息,可以看到编译进来的所有方法以及调用堆栈的地址.
+  3）利用nm指令查看静态库中符号表
+     ./arm-linux-androideabi-nm libaudio.a > symbol.file
+	
+  4）利用g++指令编译程序
+  5）利用addr2line将调用地址转换为代码行数
+     指令如下:
+	 ./arm-linux-androideabi-addr2line -e libMemoryLeak.so 0xcf9c > file.line
+	 文件file.line里就是调用地址0xcf9c对应的代码文件和对应的行数,注意这里输入的so必须是obj目录下的带有symbol file的so,否则解析代码文件与函数不成功
+	
+  6）利用ndk-stack还原堆栈信息
+     指令如下:
+	 ndk-stack -sym libMemoryLeak.so -dump tombstone_01 > log.txt
+	 当程序出现Native层的Crash时,系统会拦截并将Crash的堆栈信息放到/data/tombstone-stone目录下,存储成为一个文件,系统会自动循环覆盖,并且指挥保留最近的
+	 10个文件
+
+14、Native层的内存泄漏检测
+  1）Native代码的静态检测
+     CppCheck
+	 范例：int [] studentlist = new int[10];
+	       studentlist[10] = 88;
+		   像这种，语法没有错误，编译器是没有办法检测出来的， 但是CppCheck就可以检测出来。
+	
+  2）Native代码运行中的检测
+     LeakTracer是linux平台上常用的内存检测工具移植到android平台上.作为动态检测内存泄漏的工具.
+	 原理:
+	 重写了new delete malloc free等操作符,leacktracer会利用系统函数取出对应的调用堆栈内存地址进行存储,等delete的时候,取出调用堆栈的地址和之前存储的地址进行配对,如果
+	 没有配对成功,即为内存泄漏的地方,最终会把所有内存泄漏的调用堆栈地址存储到内存泄漏文件中.
+
+二、安卓（高级篇）
+
+1、热修复
+  1）什么是热修复
+     用户无需重新发版，在用户无感知修复，无需下载最新应用，代价小。修复成功率高，把损失降到最低；
+	 
+  2）修复什么
+     代码修复、资源修复、动态so修复
+	 
+  3）热修复框架分类
+     a、native层hook
+	    Dexposed
+		Andfix
+		阿里百川HotFix
+		
+		原理：直接在antive层做方法结构体信息替换，从而实现完美的方法新旧替换，实现热修复。他的思想完全来源于Xposed框架，完美诠释了Aop编程，这里用到最核心的知识点就是
+		在native层获取到指定方法的结构体，然后改变他的nativeFunc字段值，而这个值就是可以指定这个方法对应的native函数指针，所以先从Java层跳到native层，改变指定方法的
+		nativeFunc值，然后在改变之后的函数中调用Java层的回调即可。实现了方法的拦截功能。
+		
+		dexposed：
+		缺点：dalvik上完美支持，但是art不支持，即5.0以上系统就不支持了。
+		      无法增加类和变量，所以不能做新功能发布。
+			  兼容性和稳定性不好，native出现异常难于排查。
+	    优点：及时生效
+
+		andfix：
+		缺点：支持dalvik和art
+		      稳定性和兼容性不够好，由于android厂商众多，有可能修改方法结构体， 这样就没办法替换的。
+			  不支持新增方法，类和属性。
+	    优点：及时生效
+	 
+	 b、java multidex
+	    QZone超级补丁
+		大众点评的Nuwa
+		原理：Hook了ClassLoader.pathList.dexElements[]。因为ClassLoader的findClass是通过遍历dexElements[]中的dex来寻找类的。当然为了支持4.x的机型，需要打包的时候进行
+		插桩。越靠前的dex优先被系统使用，基于类级别的修复。
+		
+		优点：不需要考虑的delvik和art虚拟机做适配
+		      代码是非侵入式的，对apk体积影响不大
+		
+	    缺点：需要下次启动才能生效
+		      最大的挑战在于性能，虚拟机在安装期间为类打上CLASS_ISPREVERIFIED标志是为了提高性能的，但是插件包中的类由于没有走安装流程，故没有被打上这个标志，运行时就
+			  会报异常，要解决这个异常，就得防止类被打上CLASS_ISPREVERIFIED标志，可是这样做又影响性能。
+
+	 c、java层hook
+	    Robust--Instance Run热插拔原理
+		原理：Robust插件对每个产品代码的每个函数都在编译打包阶段自动的插入了一段代码，插入过程对业务开发是完全透明的。编译打包阶段会自动为每个class增加了一个类型为
+		ChangeQuickRedirect的静态成员，而在每个方法前都加入了changeQuickRedirect相关的逻辑，当他不为null时候，可能会执行accessDispatch从而替换掉之前老的逻辑，达到
+		fix的目的。
+	 
+	    优点：高兼容性、高稳定、修复成功率高
+		      补丁实时生效，不需要重新启动
+			  
+		缺点：代码是侵入式的，会在原有类中加入相关代码
+		      so和资源的替换暂时不支持
+			  会增加apk的体积，
+			  会增加少量的方法数
+			  
+	 d、dex替换
+	    Tinker
+		Amigo
+		原理：服务器做dex差量，将差量包下发到客户端，在ART模式的机型上跟原apk的class。dex做merge，merge成为一个新的merge。dex后将merge。dex插入pathclassloader的dexElement中，原理和qzon类同。
+		为了实现差量包的最小化，tinker自研了DexDiff/DexMerge算法。支持so和资源的更新。
+
+	    优点：支持动态下发代码
+		      支持替换so库和资源
+
+		缺点：不能及时生效，需要下次启动
+
+		痛点：Dex合并内存消耗在vm heap上，容易OOM，最好导致合并失败。
+		      如果本身app占用内存已经比较高， 可能容易导致app被系统杀掉。
+
+			  
+	 e、混合、优化
+	    sophix
+		原理：andfix底层ArtMethod结构时采用内部变量一一替换，但是各个厂商是会修改的，所以兼容性不好，Sophix改变了思路，采用整体替换方法结构，忽略底层实现，从而解决兼
+		容稳定性问题。
+		
+		sophix对dex的解决方案：
+		dalvik下采用阿里字眼的全量dex方案：不是考虑把补丁包的dex插入到所有dex前面（dex插桩），而是在原来的dex中删除掉补丁dex存在的类（只是删除了定义），这样让系统查找
+		类的时候在原来的dex中找不到，那么就会找到补丁dex中的类。
+		art下虚拟机支持多dex的加载，Sophix的做法是把补丁dex作为主dex而已。相当于重组了所有的dex文件，
+		
+		资源修复常用方案：
+		构造一个新的AssertManager，然后铜过反射调用addAssertPath，把这个完整的新资源包加入到AssertManager中。这样就生成一个新的AssertManager。
+		找到所有之前引用原有AssertManager的地方，通过反射，把引用处替换为新的AssertManager。
+
+		sophix资源解决方案：
+		构造一个package id为0x66的资源包，这个包里只含有改变了资源项，然后直接在原来的AssertManager中addassertPath这个包就可以了。
+
+		so修复另辟蹊径，采用的是类似与类修复反射注入方式。把补丁so库的路径加入到nativeLibraryDirectory
+		数组的最前面。加载的时候加载的就是补丁包so库。 而别的方案是需要手动替换系统System.load来实现替换目的。
+		
+	 备注：参考资料链接：https://www.cnblogs.com/popfisher/p/8543973.html
+
+2、插件化
+  1）什么是插件化
+     插件就是把应用中某个独立的模块单独抽取出来， 做成插件app的形式， 可以放在宿主app的assert目录下， 也可以放在服务器上。 当宿主程序起来是后， 但用户需要查看对应插
+	 件模块的内容时，才会加载插件。好处就是可以减小app的体积。
+
+  2）插件化需要解决的问题
+     a）加载插件中的类?
+	    新建一个插件apk的classloader， 取出其中的dexelements， 然后通过hook技术取出宿主程序的classloader中的dexelements文件，然后新建一个新的dexelement， 把插件和宿主
+		程序的dexelements合并进去。 通过反射setfield来来设置pathdexlist。这样宿主程序就可以访问插件中的类文件了。 
+
+	 b）启动插件中的activity、service?
+	    如何解决插件中的activity的调用问题呢？ 创建一个占桩activity， 在ams检验之前，把插件中的activity设置成站桩activity，同时保留插件activity的信息，在ams检查之后，
+		再把插件activity还原。  那怎么样实现替换工作呢？在启动activity的时候，要先向ams作报告，会先通过ams的本地代理对象实际上是ActivityManagerNative.gdefault对象（
+		他是一个代理对象，也是一个单例对象）， 通过动态代理技术重新设置这个代理对象。在invocationhandler的invoke中做调包工作。 然后ams会通过ActivityThread创建主线程
+		looper，并启动looper循环。 ActivityThread会向自己的内部类Hhander中发送消息。我们通过hook，来设置H hander的mcallback对象，来还原插件activity的请求的。 这样
+		我们的插件actiivty就能够正常启动了。如何识别启动的activity是插件activity，通过在intent中插件key值来标识。
+
+		备注：当我们app被安装以后，会在系统/data目录下生成一个app的私有目录，保存app的信息， 他在内存中是以LoadApk的形式存在的。
+
+	 c）加载插件中的资源文件?
+	    通过查看源码， 他是在ContextImpl类中初始化的， 通过ResourceManager, AssertManager, 通过调用assertmanager中的addassertpath来初始化resource对象。 所以我们需要新
+		建一个assermanger对象， 通过它来获取插件中的resource资源。 这样我们在宿主程序中提供接口， 来获取插件中的resource资源。 宿主程序就能正常获取插件的resource资源了。
+
+  3）除了利用反射这种方式外，还有哪些实现方式？
+
+3、kotlin
+
+4、react-native
+   1）所做的优化点
+	  a、列表采用Flatlist，效率比listview更高效；
+	  b、在componentshouldmount生命周期函数中判断数据有没有变化，有的话，才进行页面的刷新操作；
+	  c、RN主要的性能瓶颈在javascript的执行，js是比较耗时，
+	  d、js bundle进行拆分，分为框架bundle和业务bundle；
+	  e、react native单实例共享；
+	  f、jsmodule单实例加载后， 不要在重复加载；
+	  g、app启动后，预加载rn实例；
+	  h、框架兼容层，统一规则， 以便后续框架升级后还需要更改业务层方面的东西；
+
+   2）jsx是一种javascript语言的扩展。rn用它来描述用户页面。
+   3）jsx布局开发的心得体会
+	  a、left，right，top，bottom必须在绝对布局中才能使用， 且在项目中尽量少用绝对布局。 在做类似弹框那种的时候可以使用；
+	  b、如果父布局使用flexDirection:’row’的时候，子布局必须给设置width，否则子布局不会显示出来；
+	  c、做一个左对齐， 右对齐的布局
+			<View flexDirection;’row’>
+				<View width;20 height: 20 backgroundColor:’#987654’>
+				<View width;20 height: 20 backgroundColor:’#987654’ flex:1>
+				<View width;20 height: 20 backgroundColor:’#987654'>
+			</View>
+
+	  d、flexDirection指定的方向为主轴， 与主轴垂直的方向就是次轴。
+			 alignItems控制子元素在次轴方向的布局， justifyContent控制子元素在主轴方向上的布局。
+	  e、如果父布局使用alignItems布局，子元素使用了alignSelf布局， 则父布局的alignItems属性对子元素没有作用；
+
+5、flutter
+
+6、hybird开发
+   腾讯X5内核源码（shouldOverrideUrlLoading）
+   react-native
+   weex
+   flutter
+   
+   flutter与别的跨平台框架的最大区别:自己实现了一套2D渲染引擎.在性能上要比其他基于js框架要好.
+   
+7、组件化架构？美团WMRouter架构是如何实现的？
+   1）通过gradle来管理所有的模块的，以及各个模块的依赖关系；
+   2）组件化需要解决的问题？
+      a、模块之间的页面跳转？
+	  b、模块之间的数据传递？
+	  c、
+   3）二手车项目之前的方案？
+      是基于接口方式来实现一套路由协议，
+	  
+   3）美团WMRouter原理？
+      a、页面跳转是通过uri分发实现的。
+         美团WMRouter是基于注解的方式来生成路由表的（UriRequest（scheme、host。path）和目标页面activity的对应关系）。有RouterUri、RouterRegex、RouterPage三种注解，
+		 分别对应着PageAnnotationHandler、RegexAnnotationHandler、UriAnnotatiionHandler，这三个是在DefaultRootUriHandler中创建的，创建的时候分别设置了优先级，给定
+		 了执行顺序。每个跳转页面都配置了注解。根据注解，找到了对应的跳转页面。 当然页面也可以配置Interceptor类来拦截。 拦截类可以配置多个。 组成一个拦截器链。 
+		 shoulehandle、handleinternal
+		 
+	  
+	  b、moudle之间数据业务逻辑共享是通过ServiceLoader来实现的。
+	     ServiceLoader中有两个map，一个是static修饰的，接口类和ServiceLoader的对应关系。另外一个是key和ServiceImpl的对应。调用通过Router.getService（ServiceInteface，key）
+	     获取service，最终调用ServiceLoader。load（serviceIntef）。get（key）。先通过接口查找到对应的ServiceLoader，然后通过key值找到对应的ServiceImpl实现类。
+	  
+   4）WMRouter架构和ARouter的差异是什么？
+
+
+7、jni相关
+   1) jni的方法签名怎么写?
+      jclass jc ＝ env->findClass("com/demo/Demo");
+      jobject jo = env->allocObject(jc);
+      jmethodid mid = env->GetMethodId(jc, "append", "(LJava/lang/String;I)LJava/lang/String")";
+      JString str = env->callObjectMethod(jo, jmethodid, "", 12);
+
+8、android启动流程分析
+
+9、http和https相关
+   1) 二者的区别？
+      https要向ca申请证书
+      网络请求端口不一样， http是80，https是443
+      http是超文本传输协议，传输的是明文， 而https是经过ssl/tls加密的传输协议；
+      https握手阶段比较耗时， 所以加载时间比较长；
+	  
+   2）https是如何做到安全的？
+      客户端向服务器发起申请ssl公钥的请求
+	  服务端会将ssl的公钥，以及经过ca证书的私钥加密后的公钥密文传给客户端
+	  客户端拿到数据后， 用本地ca证书的公钥对秘文进行解密， 和传递过来的ssl公钥进行比对， 是否一样（实际比对用的是hash值，效率更高点），主要是做身份认证
+	  身份认证通过后，客户端在本地生成一个对称密钥，然后拿公钥进行加密，传递给服务端
+	  服务端拿到对称密钥的秘文，用私钥进行解密，获取对称密钥
+	  以后客户端和服务端进行数据传输时，都经过对称密钥进行加密，这样双方都可以进行解密
+	  
+	  备注：https也不是一种绝对安全的网络协议，它依赖ca证书，故当ca证书被篡改后（手机被root后，就有可能被篡改），这样的话， 就不能保证安全了。 
+	  
+   3）http返回码
+      按类分为：
+	  1xx表示信息，服务端收到请求，需要请求者继续执行操作
+	  2xx表示成功接收并处理
+	    200
+		206表示分段返回部分数据
+	  3xx表示重定向，需要进一步的操作以完成请求
+	    304表示服务端没有数据更新，客户端用缓存数据即可
+	  4xx表示客户端错误
+	    400 bad request， 客户端请求语法错误 
+		401 Unauthorized 请求要求用户的身份认证
+		402 payment required 保留， 将来使用
+		403 forbidden 服务器理解客户端请求，但是拒绝执行此请求
+	    404 not found
+		405 method not allow 请求方法被禁止
+		408 request timeout
+	  5xx表示服务端错误
+	    503
+        504
+		
+   4）http的缓存是如何实现的？
+        a、涉及到的字段
+		   expires：缓存有效期
+		   cache－control：是否要缓存的字段
+		   last－modified：上一次修改缓存数据时间
+		   etag：缓存版本
+		   data：
+		   if－modified－since（客户端，与last-modify对应）：后面跟一个时间， 判断这个时间之后服务器端的数据有没有变更过
+		   if－none－match（客户端，与etag对应）： 判断有没有缓存被命中
+		   
+		  既生last-modify为何还要etag？
+		  1）首先last-modify是精确到秒级别，所以精度不够，修改在秒级以内，就会出错
+		  2）修改了，但是内容没有变化了，此时etag版本是没有变化的
+		
+10、android中如何解决两个页面传递1M的数据？
+
+三java基础
+
+1、java中的内存区域被分为哪几部分区域， 这几部分区域存储什么样的数据？
+   堆区、栈区，方法区、本地方法区、程序计数器，
+   其中方法区内存区域和堆区的内存区域都是线程共享的数据区域。其中栈区的内存区域是线程隔离的数据，本地方法栈是指对于native方法的调用现场，对于线程也是独立的.程序计数器
+   就是记录程序运行的下一条指令的地址，也是线程之间相互独立的区域。
+
+2、java内存模型？
+   内存分为主存和缓存（工作内存），比如现在主线程中有个变量enable，当多个线程子线程操作该变量时候，enable变量在每个子线程中都有个缓存变量，其操作的时候，是直接修改的
+   该缓存变量，而不是修改主内存中的该变量，修改后，需要把数据同步到主内存中。所以在多线程中有可能出现数据不一致的问题。需要特别处理。编译器加入缓存概念，是为了提高运
+   行效率。
+   
+   为什么要加入工作内存（高速缓存）的概念，由于cpu计算速度和内存读取速度存在代差，为了弥补，才引入工作内存的概念
+
+3、java常见的垃圾回收算法算法都有哪些？如何实现一个垃圾回收算法？
+   垃圾回收的内存区域是对内存中的数据，这块区域又被分成新生代、老年代和永生代。按照对象在内存中的存活时间来划分的。
+   1）标记-清除算法
+      a、效率低下（标记之后，每块都要清除）
+	  b、会产生大量的内存碎片
+	  
+   2）复制算法
+      内存区域分成两块相同的部分，开始的时候，只在其中的一块中申请内存，垃圾回收时，把该块的非垃圾内存按顺序拷贝到另外一块内存中，然后将该块内存整体擦除，效率较高。其
+	  缺/***xcxczasAr6 7 7 78 89 89088io sWD;dtp[p6点是内存有效利用率不高
+	  =[th6g[pgrerfrff;gghj
+	  kl;p'
+   3）标记-
+   整理算法
+      当垃圾回收时，会把内存按照顺序合并在一起，把剩余的内存区域整体以此清除，效果最好哦。
+	  
+   备注：其中新生代采用复制算法，老年代采用标记-整理算法。
+         垃圾回收算法链接：https://blog.csdn.net/weixin_40739833/article/details/80717638
+      
+4、如何判别一块内存区域可以被回收了？
+   1）引用计数器
+      判断一块区域，有没有被引用，引用以此，计数器就+1，反之就-1，但是这个方法有个缺陷，就是没有办法解决相互引用的问题
+   2）根节点可达，判断某块区域从根节点是否可达，只有不可达的才可被回收。
+   
+4、gc root节点如何选取
+   1）虚拟机栈中引用的对象,一般是指局部变量
+   2）方法区中的常量引用的对象
+   3）方法区中的静态变量引用的对象
+   4）本地方法区中JNI（即一般所说的native方法）引用的变量
+   
+
+5、java反射
+
+6、java中的数据结构都有那些分类
+  1）collection
+	set集合
+	list
+	  arraylist
+	  linkedlist
+  2）map
+    hashmap
+	
+
+
+四、设计模式
+1、设计模式分类：
+   a、创建型：
+      工厂方法模式、抽象工厂模式、单例模式、建造者模式、原型模式。
+   b、结构型：
+      适配器模式、装饰器模式、代理模式、外观模式、桥接模式、组合模式、享元模式。
+   c、行为型：
+      策略模式、模板方法模式、观察者模式、迭代子模式、责任链模式、命令模式、备忘录模式、状态模式、访问者模式、中介者模式、解释器模式。
+	  
+2、常见的设计模式都有哪些，他们是如何使用的？
+   1）单例模式
+	   实现有两种方式，分为懒汉式和饿汉式，饿汉式天生线程安全，而懒汉式要实现线程安全，需要使用双重判空锁机制，外加volatile关键字修饰，代码实现如下：
+	   a、饿汉式实现单例类
+		   public final Singleton {
+				private static final Singleton mIns = new Singleton();
+				private Singleton() {}
+				public static Singleton getIns() {
+					return mIns;
+				}
+		   }
+	   
+	   b、懒汉式实现单例类
+
+		   public final Singleton {
+				private Singleton {}
+				private static class SingletonHolder {
+					public final Singleton = new Singleton();
+				}
+				public static Singleton getInstance() {
+					return SingletonHolder.singleton;
+				}
+			}
+
+			public final Singleton { ／／final为了让这个类不能被继承，防止集成类修改singleton
+				private volatile static singleton = null;
+				private Singleton { ／／构造函数设置成private类型， 让外部不能调用构造函数产生实体类，只能通过调用getInstance方法来实现一个构造函数；；
+
+				}
+				public static Singleton getIns() {
+					if(null == singleton) {
+						Synchronized(Singleton.class) {
+							if(null == singleton) {
+								singleton = new Singleton(); ／／构造函数本身是需要耗时的，
+							}
+						}
+					}
+					return singleton;
+				}
+			}
+		   可能会涉及的问点：
+		   a、为什么要使用双重判空？
+			 外层的判空条件是为了提高性能的，即使不加的话，对程序的正确运行也没有影响的。对性能的影响有多大？？？
+			 内层的判空的条件是非加不可的，如果不加的话， 两个线程同时走到synchronized那块，就会new出两个Singleton对象。
+		   b、为什么要添加volatile关键字？
+		     为了保证可见性和有序性
+   
+   2）builder模式
+     特点：提高代码的可读性。如：builder.age(32).name(“hack”).build();
+   3）原型模式，clone克隆一份一模一样的对象。
+     实现方式：通过实现cloneable接口即可。
+	 范例：OKHttpClient就实现了cloneable接口，如果不实现的话，想要拷贝一个对象，需要new一个对象，然后将此对象的每个字段进行逐个赋值操作。
+   4）策略模式
+     范例：a、属性动画的插值器
+	 b、okhttp源码中的RetryPolicy重试策略就是利用这种模式，
+	 c、各种缓存cache策略
+   5）代理模式
+     范例：mediaplayer源码中的MediaPlayerProxy就是对AwesomePlayer的代理
+   6）工厂模式
+   7）简单工厂模式
+   8）状态模式
+     范例：蓝牙源码中的状态机
+   9）观察者模式，是一种一对多的设计模式，
+     常见的应用场景如下：
+	 RecycleView.addOnScrollListener()
+     Broadcast (register  unregister  sendbroadcast )
+     EventBus()
+     RxJava
+	 
+   10）ioc控制反转模式
+   
+   11）外观模式
+       外观提供一套统一的接口， 用来访问子系统的。 
+	   范例：美团WMRouter中的Router类，定义一套接口， 调用的。
+
+
+3、容易混淆的设计模式
+   
+   工厂模式和简单工厂模式，工厂方法模式，抽象工厂模式
+
+
+   1）单一原则
+   2）开闭原则， 对修改关闭， 对扩展开放
+   3）接口隔离原则， 
+   量把接口做拆分， 不能搞一个大的接口
+   4）依赖倒置原则， 抽象不依赖于具体， 具体依赖于抽象
+   5）合成复用原则， 尽量使用组合， 而不要通过继承来复用 
+   6）迪卡特原则， 一个实体类尽量不要和其他实体类相互依赖
+   7）里氏替换原则， 一个基类替换成子类后不会有任何错误
+
+
+五、数据结构
+1、java中的数据结构按类型分为哪些?
+   collection接口类和map接口类， 其中set、list和都实现了collection接口。其中collection接口的方法如下：
+   Collections.sort(list)，对list进行排序
+   Collections.max(list)，求取list中对最大元素值
+   Collections.min(list)，求取list中的最小元素值
+   Collections.binarySearch(list, "value")，查处list中值为value的元素的下标
+   Collections.replaceAll(list, "aaa", "bbb")，把list中值为aaa的元素全部替换成bbb
+   Collections.reserve(list)，把list做反转操作
+   
+   collection  
+     list－》arraylist、linkedlist和vector
+     set－》 hashset和treeset
+   map－》hashmap和treemap
+   
+2、哪些数据结构是线程安全的?
+   hashtable、stringbuffer、vector
+3、如何设计一个线程安全的队列?
+   要保证数据的原子性（synchronizeds）、有序性和可见性（volatile）
+4、你在项目中最常用的队列种类都有哪些?
+5、hashmap、concurrenthashmap和hashtable的区别?
+   hashmap是非线程安全的；
+   hashtable是线程安全的，但是同时只能有一个线程做写操作，效率比较低下；
+   concurrethashmap是线程安全的，他内部使用锁分段机制，map被分为16个桶状结构，可能同时支持16个线程同时操作；
+   
+6、解决hash冲突的策略方法都有哪些?
+7、linkedhashmap概述,常用的垃圾回收算法是用的什么类型的数据结构?
+   linkedhashmap的数据结构是hashmap和linkedlist的组合。每个entry节点中有三个指针。一个指向前序节点，一个指向后续节点，一个指向发生hash碰撞时链接的下一个节点。常见的
+   LRU（最近最少使用）算法内部就是利用linkedhashmap这数据结构来实现的。
+   
+8、sparseArray、arraymap、hashmap的关系？
+   sparseArray更节省内存，性能更高。hashmap的key和value的类型均为泛型。而sparseArray的key为int，value为Object类型。他里面有两个数组结构，分别存储了key和value数据。
+   arraymap是在sparseArray特点的基础上，存储的数据类型修改为任意类型。
+   
+9、hashmap概述
+   a、hashmap的底层数据结构是数组加链表的组合
+   b、hashmap中有个扩容因子，是0.75，表明数据占比达到0.75的比例时，就会触发扩容机制。容量增长为原来的一倍。hashmap默认容量是8。要想提高效率，就要把扩容因子设置的小点，这
+   样发生hash碰撞的概率较小，利用空间换取时间的方式。
+   
+   c、hashmap冲突的原因是什么？难道仅仅是大家所熟知的hash值相同吗？hash值不同就不会产生hash冲突了吗？ 同一条链条上的数据，根据key值得出hash值，再换算成index是一样的。位于
+   同一链表上的数据的hash值的后n位一样（hashmap的容量是2的n次方）
+   
+   d、发生hash碰撞的时候，新插入的数据是插入到链表头部还是尾部？
+      是插入头部的,代码如下：
+      void addEntry(int hash, K key, V value, int bucketIndex) {
+        Entry<K,V> e = table[bucketIndex];
+        table[bucketIndex] = new Entry<K,V>(hash, key, value, e);
+        if (size++ >= threshold)
+          resize(2 * table.length);
+      }
+   
+   e、扩容的时候，原数据是怎么插入新的map中的？
+      还是根据key的hash，在计算出其对应的index，插入新的map中。
+   
+   f、之前位于同一链表上的数据在扩容后还在同一链表上吗？
+      不一定，扩容后，同一链表上的key的hash值的后n+1位相同，
+	  
+	  e.hash & (oldcapacity-1)  等价于 j | highBit
+
+      推理如下：
+      j | highBit
+      = j | (e.hash & oldCapacity) 第一步
+      = (e.hash & (oldCapacity-1)) | (e.hash & oldCapacity) 第二步
+      = e.hash & ( (oldCapacity-1) | oldCapacity) 第三步
+      = e.hash & (newCapacity- 1) 第四步
+   
+   
+
+六、算法
+1、如何判断链表是否相交？
+   1）两个链表同时入栈，判断栈顶元素是否一样？一样，则相交。
+   2）两个链表同时遍历到尾部，判断尾部是否一样？一样，则相交。
+   3）set集合法，两个链表同时加入set集合，每次加入集合大小都+1，则说明不相交。
+2、如何判断链表是否有环？
+   快慢指针法（步长为1，步长为2）
+   set集合法, 每次取出元素后, 判断set集合的大小, 是否加1, 如果大小不再增加, 则表明有环, 利用了set集合的key值唯一的特性
+3、二分查找：
+   变种问题
+   a、数组789123456，如何实现一种查找算法，时间复杂度为log（n）？数组789123456，如何实现一种查找算法，时间复杂度为log（n）？
+   实际上也是利用了二分查找算法。只是查找规律。采用的是递归思想实现。
+   二分查找的算法核心思想是每做一次运算能够使得数据量减半。 能够命中哪块区域。仔细分析上述数据，经过折半分拆数据后，都能保证有一边的数据是已经排好序的数据。 这样就能
+   判断所查找的数据落在哪块区域了。
+
+   代码如下：
+   public int search(int []arr, int left, int right, int value) {
+	  int middle = (left+right)/2;  //这块可能导致数据溢出，最好使用left ＋ （high － left） >> 1; 位操作效率更高
+	  
+	  if(value == arr[middle]) return middle;
+	  if(left >= right) return -1;//没有找到；
+
+	  if(arr[middle] > arr[left]) { //左边是升序
+		 if(value >= arr[left] && value <= arr[middle]) {
+		   return search(arr, left, middle, value);
+		 } else {
+		   return search(arr, middle+1, right, value);
+		 }
+	  } else { //右边是升序
+		if(value >= arr[middle] && value <= arr[right]) {
+		  return search(arr, middle, right, value);
+		} else {
+		  return search(arr, left, middle-1, value);
+		}
+	  }
+	}
+	b、查找第一个等于value的算法？第一个大于等于（小于等于）value的算法
+	
+4、在一组无序的数组中，如何查找第k大的数据？
+   思路：属于快排的变种，快排的思想就是每查找一次，中间的数都比左边的大，都比右边的小， 每次比对中间的数的下标和k的关系，等于k即表示找到了。小于k，说明在右边， 否则
+   说明在左边。以此类推即可找到。
+   
+
+5、快速排序算法如下：
+   算法思想：每排一次序，左边的数据都比标兵数据小，右边的数据都比标兵数据大，以此类推
+   void quickSort(int a[], int low, int high) {
+	  int start = low;
+	  int end = high;
+	  int key = a[start];
+
+	  if(low >= high) return;
+
+	  while(start != end) {
+		while(start < end && a[end] >= key) {
+		  end--;
+		}
+
+		if(start < end) {
+		  a[start] = a[end];
+		}
+
+		while(start < end && a[start] <= key ) {
+		  start++;
+		}
+
+		if(start < end) {
+		  a[end] = a[start];
+		}
+	  }
+
+	  a[start] = key;
+	  quickSort(a, low, start-1); //前半部分进行排序
+	  quickSort(a, start+1, high); //后半部分进行排序
+	}
+
+	int main(int argc, char **argv) {
+	  int a[] = {4,3,6,8,1,2,9,6,5,2};
+	  quickSort(a,0,9);
+
+	  for(int i = 0; i < 9; i++) {
+		printf("%d\n", a[i]);
+	  }
+	  return 0;
+	}
+	
+6、堆排序
+	a、原理和实现步骤：
+	堆是一个完全二叉树包括建堆和排序两个步骤。建堆完毕后，整个树成这样的结构。父节点大于等于（大顶堆）或小于等于（小顶堆）子节点。
+
+	建堆步骤如下：
+	1、插入一个元素：先插入堆的尾部，然后和父节点比较， 比父节点大， 则和父节点交换。 否则结束。
+	2、删除堆顶元素：删除后，把堆的最后一个元素放入堆顶， 然后和堆顶的自节点比较， 找出插入点，然后交换。
+
+	建堆完毕后， 就是排序了。 
+	排序步骤如下：
+	1、堆顶和堆尾的数据进行交换；
+	2、堆顶元素和子节点比较，然后插入位置，进行交换即可类似上面的删除堆顶元素的操作步骤；
+
+	堆排序不用占用额外的内存空间。只是排完序后就会就成有序的了。 
+	b、时间复杂度：
+	快速排序和堆排序的时间复杂度都是O(nLogn)
+
+	应用场景：
+	优先级队列、求取top k、 求取中位数
+	求取topk的实现思路， 求n个数据中取出前k大的数据，初始化一个小顶堆， 然后再依次取出后面的n－k个数据，如果取出的数据比堆顶数据大，则删除堆顶数据，然后把数据入堆操
+	作。 依次执行完所有的数据， 此时就是前k个数据；
+
+	求取中位数实现思路， 先把数据分成两等份，实例化两个堆，一个大顶堆，一个小顶堆，小顶堆的数据都要大于大顶堆中数据， 此时中位数就是大顶堆或小顶堆中的堆顶数据。 然后
+	当新增数据后， 把新增的数据移动到大顶堆或小顶堆， 然后再把数据做转移， 保证大小堆中的数据相等，或大顶堆中的数据比小顶堆中的数据＋1即可。然后就获取到了中位数。
+
+7、二分查找
+     a、变种问题，在一组有序的数组中，查找第一个值等于value的下标，第一个值大于等于value的下标，第一个值小于等于value值的下标？
+   
+   
+七、视频
+1、协议层
+   1）rtsp协议
+      它是adobo公司开发的协议，包括OPTIONS、DESCRIBE、SETUP、 TEARDOWN、 PLAY等请求， 来控制视频播放的；实时性比较好，被广泛应用安防监控类行业。
+	  
+   2）rtmp协议
+   
+   3）hls协议
+      是apple公司开发的协议。主要应用的移动设备上视频流传输。它采用分片的方式，将一个视频分成n多的小的视频片段。http负责数据的传输。
+	  m3u8：索引文件。要播放一个视频，需要先下载它的m3u8文件，里面包含视频流的地址。包括一级m3u8文件和二级m3u8文件。其中一级中包括对应的多路流媒体信息， 二级中包括对
+	  应的流中包括多少个ts视频流信息；
+	  ts：表示对应的视频流地址。
+	  
+	  备注：一般情况，每个ts流的市场大概在10s左右。
+   
+2、ffplay的线程模型是什么？
+
+
+   
+七、源码分析
+1、OKhttp源码
+   1）拦截链都有哪些？
+     a、重定向连接器， retryandfllowupinterceptor， 创建了streamallocation
+     b、桥接拦截器：bridgetinterceptor，设置内存长度， 编码方式， 请求头， gzip压缩， cookie
+     c、缓存拦截器；cacheinterceptor， 添加缓存逻辑处理， 就是让下一次网络请求节省更多时间，加快页面展示速度
+     d、连接拦截器：connectinterceptor， 创建网络连接
+     e、callserverinterceptor， 执行真正的网络请求
+   
+六、项目
+
+1、二手车项目优化点
+   1、 启动页做了优化， 延时加载， 就是通过这个idlehandler来实现的， 通过返回值等于false表示只执行一次， 返回true就表示可以无限次数的执行；
+   2、 首页数据做了缓冲，本地file和sp缓冲；
+   3、 详情页做了预加载；
+   4、 详情页做了接口拆分，领先借口和别的接口；
+   5、 页面无网和无数据默认图做了统一的sdk来处理；支持actiivty和fragment；
+   6、 数据埋点做了优化，加了缓冲埋点， 条数到达多少条后才缓冲，减少网络请求次数；
+   7、 title栏做了统一， 所有页面用同一个view；
+   8、 push推送做了统一处理， 外层统一封装一层借口， 使得外部调用统一，即使将来添加新的第三方推送的sdk，客户端修改的工作量不会太大；
+   9、 组件化架构升级， 降低藕合度。 模块间跳转以及数据获取通过接口来实现； 定义一个单例类， 通过hashmap来保存所有的接口和实现类， 而在每个moudle中把这个单例类传进去， 这样所有的模块就都可以访问到这些实现以及他们的接口方法了；
+map<string, IPlugin> key值是通过tag和借口类class生成的；
+   10、通过加入aspectj 面向切面编程技术解决类似登陆相关的问题； 在连接点函数before之前加入函数判断来说明函数的解析；
+   11、通过自定义本地unCaughtExceptionHandler， 通过调用setUnCaughtExceptionHandler来拦截异常，并保存到本地文件夹，方便后续拿到log日志来定位问题；主要是在测试阶段使用。
+   12、dplink制定统一的协议， 来解析web请求；
+   13、sp文件进行拆分， 尽量不要sp文件太大， 慎用sp。commit和sp。applay，commit是写入磁盘， apply是写入内存，多用apply，少用commit；
+   14、规范线程安全的实例对象写法，埋点sdk在加入rn线程后出现崩溃问题；
+   15、数据库升级，原先使用dbutils，升级为room（google公司推出的针对android的orm关系型数据库），orm数据库就是将对象和表做了关联，不需要手动创建表，减少了开发成本，提高
+   了工作效率。
+   16、动画库做了统一。选择了lottie作为动画库，为什么选择它？
+       1）支持跨平台， android、ios、rn、web
+	   2）动画文件是json格式，占用控件较小
+	   3）动画还原度比较高
+	   4）由于是json格式，动态更新比较方便
+	   5）支持缓存
+	   6）灵活高效的api，支持暂停，播放，控制动画进度
+   
+2、项目难点
+   1、埋点在引入rn后，导致的崩溃问题。多线程问题。
+      解决方案：1、在修改数据的地方上锁，性能较差，同一时刻只能有一个
+	            2、线程队列用ThreadLocal来修饰，确保每个线程都会单独有一份队列数据，彼此互不干扰
+	  
+   2、列表页加载VR动画，内存OOM的问题？
+      解决方案：OKHttpClient。setSkipMemoryCache（true）
+	  裁剪图片尺寸，
+	  及时释放内存，
+   
+3、其他
+   1、push推送率不高
+      oppo和vivo默认情况下，手机的推送开发是关闭的，需要添加白名单
+	  vivo推送的首条消息被系统智慧云消息给拦截，经沟通需要添加白名单
+	  小米、华为部分机型收到推送消息打不开，原因为收到消息内容为乱码
+   
+   
+   
+   

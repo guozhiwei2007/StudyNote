@@ -1,0 +1,235 @@
+android知识点总结：
+
+
+
+android最常见的设计模式都有哪些，其特点是什么？
+
+1、单例模式
+懒汉模式和饿汉模式
+2、builder模式
+主要是为了提高代码的可读性，
+builder.age(32).name(“hack”).build();
+3、观察者模式，是一种一对多的关系。 
+RecycleView.addOnScrollListener()
+Broadcast (register  unregister  sendbroadcast )
+EventBus   ()
+RxJava  
+
+4、原型模式  通过拷贝对象来构造对象
+OkHttpClient实现了Cloneable的clone方法，如果不实现这个的话， 要对某个对象拷贝一份的话， 需要先new一个对象，然后挨个赋值操作
+
+5、策略模式
+属性动画设置差值器
+Volley源码中有一个RetryPolicy重试策略，就是用的策略模式。
+
+6、工厂模式
+策略模式和工厂模式类似， 一个关注行为（策略模式）， 一个关注对象（工厂模式）
+
+7、代理模式（静态、动态）
+mediapler源码中mediaplayerproxy就是对AwsenPlayer的应用
+
+8、状态模式
+蓝牙源码中用到的设计模式
+
+9、ioc模式（控制反转模式）
+di依赖注入
+构造函数注入、属性注入和接口注入
+
+
+
+二、android使用控件时候有哪些坑？
+1、AsyncTask的队列中好像最多可以存储128条数据，超过了就会被废弃掉；
+2、fragment中调用getactivity返回值可能会是空
+3、包重复依赖的问题，解决方案如下（通过exclude group的方式）：
+
+implementation 'com.github.ifmvo:Matthew_ImageLoader:1.1.3'
+implementation ('com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.43-alpha1'){
+    exclude group: 'com.android.support', module: 'support-annotations'
+}
+4、target升级时，权限问题， 当app打开后， 退到后台， 然后把权限关闭，app再次起来时， app崩溃的问题。
+解决方案：在baseactivity的increase方法中判断如果是从后台起来的， 判断有没有权限， 没有，
+第三方sdk升级
+
+5、EasyPermission库的问题
+集成的时候，默认没有权限的情况下，有个默认的弹框出现
+
+6、列表页加载动画时候，内存不够崩溃的问题
+解决方案：通过okhttp的setskipmemorycache(true).override(width,height)。
+SimpleTarget来监听图片下载进度， 下完了就保存下来。
+SparseArray来保存获取的drawable图片
+什么时候用sparsearray，什么时候用hashmap？
+数据量在千位以下时，用sparsarray， 上万后就要用hashmap了。
+
+7、listview的setonitemclicklistener没有触发回调的问题
+解决方案： 通过传入callback， 设置button的setonclicklistener方法， 然后调用callback的回传回来
+
+8、fragment欠套3个fragment时，嵌套的fragment有时会莫名其妙不显示的问题
+
+
+9、recycleview嵌套listview，listview显示不全的问题
+需要重写listview的onmeasure方法
+
+10、h5页面滑动卡顿的问题
+解决方案：把硬件加速打开，属性如下：android:hardwareAccelerated="true"
+
+10、service在app处于后台的情况下，无法启动app的问题
+解决方案：把service换成job-service
+jobservice和jobScheduler
+
+
+11、alarmmanager最重要的特性就是在手机休眠的情况下可以唤醒apu继续工作
+
+
+sparseArray特点：
+1、更节省内存， 存储的数据已经做了排序；
+2、key值只能是int；
+
+在android中，arraymap性能更高；
+
+
+四、二手车项目架构升级：
+1、刚开始时，用的是xutils架构
+dbutuils、 viewutils、 bitmaputils 和 
+后来被逐渐抛弃
+数据库目前已经升级成room（google 给android量身打造的orm框架数据库）
+
+
+五、城市选择页面处理逻辑
+1、首先先判断网络是否畅通， 如果畅通， 先取出网络数据， 回来刷新页面， 并更新本地缓冲（数据库）；
+如果不畅通， 则先取出缓冲数据， 如果有缓冲，取出缓冲数据刷新页面， 如果没有， 则取出本地assert中json文件数据；
+
+
+优化索引：
+
+
+
+app签名文件都包含什么内容？
+appalias；
+apppassword；
+
+mvp的缺陷都有哪些？
+最明显的创建一个Activity需要配合创建多个接口类和实现类，每个操作都需要通过接口回调的方式进行，虽然逻辑清晰代码，同时也造成了类的增多和代码量的加大。
+ 
+解决方案：
+    利用泛型封装一下MVP的base类，通过泛型所提供的类型去实例化View层和Presenter层，在继承封装好的基类中快速的使用MVP模式。注意的是通过泛型约束后，在继承的时候需要填写多个泛型值。
+
+
+插件化学习总结：
+解决的问题如下：
+1、加载插件中的类：
+app安装后， 会在／data目录下生成安装的apk的信息。 他在内存中保存在了loadapk中。由于插件没有被安装， 所以无法加载插件中的类和资源。 而加载类用到了loadapk中的basedexclassloader， 有dexclassloader和patahclassloader两种。pathclassloader加载系统和主dex包中的类， dexclassloader加载剩余的dex文件。所以我们有两种方案：
+一种是生成插件的loadapk，通过反射把他放在系统mpackage对象中，但是loadapk中有很多东西比如applicationinfo，就是通过读取androidmanifest.xml来生成的。但是这样处理逻辑很复杂， 像360的droidplugin就是通过这种策略来实现的。
+另一种是通过生成插件中classloader对象，加载插件中dex的dexelement然后把他合并到主app的classloader中。然后就如下：
+basedexclassloader->dexpathlist->dexelements [Element]， 获取到插件中的dexelements，然后插入到dexpathlist中。
+
+2、启动插件中activity：
+首先我们新建一个占坑的activity，因为启动activity在ams中有个判断，启动的activity必须在android manifest.xml文件中声明过，否则会报activity未申明。 所以实现的思路是在检查前，把他替换成占坑activity， 然后等到真正创建时，再替换成原来的activity。思路如下：
+activity启动流程， ActivityManagerNative->gdefault.它实际上是ams的一个本地代理。我们只需要设置它就可以了。 完了之后，它会把消息放到activity什么
+
+handler下发消息的时候，先判断handler的mcallback是否为空， 如果不为空的话， 就会调用mcallback.handlemessage()方法。 mcallback本身是个handler类型。
+ActivityThread中有个H（handler） ，然后通过反射重写那个h的mcallback。即可。 在重写的时候
+
+管道pipe＋ epoll 结合， 通过epoll来监听管道的读端， 看看管道的写端有没有数据写入，如果有数据写入， 管道的读端就会被唤醒。
+
+3、加载插件中的资源
+contextimpl－》resourcemanager－》 assertmanger－》addassertpath，，然后创建一个用assertmanager来创建resource。 所以我们的方法， 通过反射将我们的插件apk的路径调用addassertmanager方法插入到assertmanger中。
+
+
+
+java反射小结
+class里面有属性filed域，方法method域；
+反射可以修改类里面的属性和方法，但是不可以基本类型的常量值。因为编译器在生成class文件的时候做过优化， 已经变后面使用常量的地方优化成了常量。所以即使你修改了需改了常量本身， 但是在使用的时候， 但是在代码使用中还是原来的常量。
+你也可以这么想，反射肯定可以修改常量的值，但是修改后的值是否会有意义？？？不见得。
+
+
+性能监控小程序：Emmagee
+地址：https://blog.csdn.net/u011159607/article/details/78143808
+
+
+对于上面的来说，setAccessible（）值为true，表示取消访问权限限制。也就是可以访问它的一些私有方法。实例如下：
+         Class clazz = SingletonTest.class;
+         /*以下调用无参的、私有构造函数*/   
+         Constructor c0=  clazz.getDeclaredConstructor(); 
+         c0.setAccessible(true); 
+         SingletonTest po=(SingletonTest)c0.newInstance();
+         System.out.println("无参构造函数\t"+po); 如下：
+
+
+插件化问题总结：
+解决的问题，类的加载，资源的加载
+类的加载： 新建一个插件apk的classloader， 取出其中的dexelements， 然后通过hook技术取出宿主程序的classloader中的dexelements文件，然后新建一个新的dexelement， 把插件和宿主程序的dexelements合并进去。 通过反射setfield来来设置pathdexlist。这样宿主程序就可以访问插件中的类文件了。 
+
+如何解决插件中的activity的调用问题呢？ 创建一个站桩activity， 在ams检验之前，  把插件中的activity设置成站桩activity，同时保留插件activity的信息，在ams检查之后，再把插件activity替换出来。 那这么样实现替换工作呢？
+
+在启动activity的时候， 要先向ams作报告， 通过ams的本地代理对象实际上是ActivityManagerNative.gdefault对象， 他是一个代理对象，也是一个单例对象， 通过动态代理技术重新设置这个代理对象。在invocationhandler的invoke中做调包工作。 然后ams会通过ActivityThread创建主线程looper，并启动looper循环。 ActivityThread会向自己的内部类Hhander中发送消息。 我们通过hook，来设置h hander的mcallback对象， 来还原插件activity的请求的。 这样我们的插件actiivty就能够正常启动了。  
+
+如何识别启动的activity是插件activity，通过在intent中插件key值来标识。
+
+如何加载插件中资源呢？ 通过查看源码， 他是在contextimpl类中初始化的， 通过ResourceManager, AssertManager, 通过调用assertmanager中的addassertpath来初始化resource对象。 所以我们需要新建一个assermanger对象， 通过它来获取插件中的resource资源。 这样我们在宿主程序中提供接口， 来获取插件中的resource资源。 插件中就能正常获取插件的resource资源了。 
+
+AsyncTask在android23里面， 默认是串行执行的， 就是一个任务执行完了后， 才会执行下一个任务， 若要解决这个问题， 需要重写自己的executor即可。 AsyncTask中有个executor，它是一个THREAD_POOL_EXECUATOR， 我们通过调用task.executeOnExecutor(executor)，就可以实现多任务并发了。 不过最好还是使用默认的， 除非不得已再使用那个了。
+一个asynctask任务被创建后， 只能执行一次任务。 如果启动asynctask， 当前task不是处于pending状态， 就会直接抛出异常。 默认只有三种状态， pending、 running和finish状态。
+一个asynctask被创建后， 只有等这个任务执行完毕了， 才会被销毁这个asynctask这个对象。 里面有个threadpoolexecutor对象， 管理者所有的asynctask对象。
+
+
+
+any_rtc商业级的实时直播框架
+
+
+
+委托模式：有两个对象参与处理同一个请求， 接受请求的对象将请求委托给另一个对象来处理。
+
+
+
+LinearGradient线性渐变的效果类
+
+startservice和bindservice，多次调用startservice和bindservice，会出现几个service的实例 
+
+
+broadcastreceiver的onreceiver方法中创建一个线程， 有可能导致线程和广播的内存泄漏。
+线程没有退出，导致线程的内存泄漏，
+由于线程内部类持有外部类的应用， 导致receiver也内存泄漏，
+sendOrderedBroadcast是发送有序广播
+
+线程start之后，必须调用stop才能使线程退出。
+
+
+
+activity在onstart中执行finish操作， 后续会走哪些生命周期函数， 为什么？
+
+现在接手一个新项目， 如何搭建项目框架？
+
+
+
+一些棘手问题？
+1、埋点sdk多进程数据错乱的问题；
+2、target权限升级，用户允许权限后，切换到后台，然后用户手动关闭权限后再次打开app后崩溃的问题；
+3、列表页添加vr动画后，内存oom的问题；
+4、动画相关的问题；
+
+gc root节点是如何选择的？
+方法区中的静态变量、常量；
+栈中的本地方法列表，局部变量生命周期随着函数的结束就结束了；
+
+android中intent传递数据超过1m的时候，就会报异常
+
+powermanager的wakelock（PARTIAL_WAKE_LOCK类型），获取锁之后，在释放锁之前，cpu会一直处于唤醒状态；
+alarmmanager做一些定时任务；
+WakefulBroadcastReceiver结合intentservice，会在启动intentservice的时候持有锁，执行完毕后，释放锁，所以保证了在程序执行完前；
+jobschedule来做一些延时任务。在指定的条件下
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
