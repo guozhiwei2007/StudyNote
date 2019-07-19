@@ -1,6 +1,6 @@
 安卓知识点整理
 
-一、安卓（基础篇）：
+一、安卓（基础篇）
 1、UI相关
    1） 如何获取view的宽高度
        a、根据生命周期onWindowChanged来实现
@@ -100,6 +100,11 @@
 	   int measureSpec=MeasureSpec.makeMeasureSpec(size, mode)，通过size和mode生成新的measureSpec
 	   setMeasuredDimension设置view的长宽
 	   
+   2）自定义view经过那几个步骤？
+       onMeasuer
+	   onLayout
+	   onDraw
+	   
 5、UI绘制, 屏幕刷新机制?
    1)丢帧一般是什么原因引起的?
      一般是主线程有耗时操作, 导致ui没有办法及时绘制 .
@@ -118,14 +123,14 @@
 
    surface跨进程传递原理
    1) 怎么理解surface, 他是一块buffer吗?
-   不是,他是一个坑子, 它包含了一个能生成buffer的独享
+      不是,他是一个壳子, 它包含了一个能生成buffer的gbf对象
    
-   1)如果是, surface跨进程传递怎么带上这个buffer?
+   2）如果是, surface跨进程传递怎么带上这个buffer?
    
-   3)如果不是,那么surface跟buffer又是什么关系?
-   传递graphicBufferProducer对象
+   3）如果不是,那么surface跟buffer又是什么关系?
+      传递graphicBufferProducer对象
   
-   4)surface到底是怎么款进程传递的?  
+   4）surface到底是怎么款进程传递的?  
 
 6、内存优化
    1）按设备等级划分，做出不同的策略；比如低配的手机设备，去掉一些复杂动画和特效，图片用低分辨率的。
@@ -320,11 +325,11 @@
 	      预加载常用类，资源和共享库
 		  启动SystemServer进程
 		  启动Socket的Loop循环，等待孵化应用进程的消息
-		  
-		  启动应用进程流程
-		  fork应用进程
-		  读取参数，执行ActivityThread。main函数（启动loop循环，向ams注册ApplicationThread）
-		 
+	   附：应用进程启动流程
+	      fork应用进程
+	      读取参数，执行ActivityThread。main函数（启动loop循环，向ams注册ApplicationThread）
+	      用loadapk中的dexclassloader生成Activity对象，准备号Application对象，生成Context对象，调用attach（绑定Context，生成WindowPhone），onCreate， onStart， onResume
+
 	备注：由于zygote进程启动了虚拟机，应用进程是由zygote进程启动起来的，所以应用进程不需要创建虚拟机了。 但是需要启动binder驱动。
 	      zygote进程和别的进程通讯是用到了socket，而不是binder通讯。
 		  
@@ -458,8 +463,8 @@
    18）android系统进程都有哪些？
        a、init进程
 	   b、zygote进程
-	   c、systemserver进程
-	   d、mediaserver进程
+	   c、ServiceManager进程
+	   d、MediaServer进程
 	   
    19）为什么有了thread，还有在弄个service呢？
        a、service要比thread更易于管理；
@@ -965,11 +970,9 @@
 	  
    2）复制算法
       内存区域分成两块相同的部分，开始的时候，只在其中的一块中申请内存，垃圾回收时，把该块的非垃圾内存按顺序拷贝到另外一块内存中，然后将该块内存整体擦除，效率较高。其
-	  缺/***xcxczasAr6 7 7 78 89 89088io sWD;dtp[p6点是内存有效利用率不高
-	  =[th6g[pgrerfrff;gghj
-	  kl;p'
-   3）标记-
-   整理算法
+	  缺点是内存有效利用率不高
+
+   3）标记-整理算法
       当垃圾回收时，会把内存按照顺序合并在一起，把剩余的内存区域整体以此清除，效果最好哦。
 	  
    备注：其中新生代采用复制算法，老年代采用标记-整理算法。
@@ -977,7 +980,7 @@
       
 4、如何判别一块内存区域可以被回收了？
    1）引用计数器
-      判断一块区域，有没有被引用，引用以此，计数器就+1，反之就-1，但是这个方法有个缺陷，就是没有办法解决相互引用的问题
+      判断一块区域，有没有被引用，引用一次计数器就+1，反之就-1，但是这个方法有个缺陷，就是没有办法解决相互引用的问题
    2）根节点可达，判断某块区域从根节点是否可达，只有不可达的才可被回收。
    
 4、gc root节点如何选取
@@ -1051,7 +1054,9 @@
 			}
 		   可能会涉及的问点：
 		   a、为什么要使用双重判空？
-			 外层的判空条件是为了提高性能的，即使不加的话，对程序的正确运行也没有影响的。对性能的影响有多大？？？
+			 外层的判空条件是为了提高性能的，即使不加的话，对程序的正确运行也没有影响的。对性能的影响有多大？？？自己的理解，即使每一条延时的时间很小，但是在服务器
+			 程序大并发的情况下， 量变有可能引起质变。 导致后面的请求获取的时间会很长。
+			 
 			 内层的判空的条件是非加不可的，如果不加的话， 两个线程同时走到synchronized那块，就会new出两个Singleton对象。
 		   b、为什么要添加volatile关键字？
 		     为了保证可见性和有序性
