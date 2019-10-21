@@ -109,8 +109,8 @@
    1)丢帧一般是什么原因引起的?
      一般是主线程有耗时操作, 导致ui没有办法及时绘制 .
    
-   2)android刷新频率是60桢/秒, 每隔16ms会调onDraw绘制以此吗?
-     不是的, 因为onDraw是由用户主动发起的,  及时没有16ms调onDraw, 屏幕也会每隔16ms刷新以此, 只是数据不变(屏幕每隔16ms会有个vsync脉冲信号), 
+   2)android刷新频率是60桢/秒, 每隔16ms会调onDraw绘制一次吗?
+     不是的, 因为onDraw是由用户主动发起的,  及时没有16ms调onDraw, 屏幕也会每隔16ms刷新一次, 只是数据不变(屏幕每隔16ms会有个vsync脉冲信号), 
 	 
    3)onDraw完毕后屏幕会马上刷新吗?
      不会马上刷新, 会等到下一个vsync信号来临才会刷新 
@@ -230,6 +230,17 @@
        new Handler(Looper.mylooper());
 	   Looper.loop（）
 	   思维扩展： 如何让handler发送、处理消息在自己的线程中， 在子线程中创建handler，类似的.
+	   looper.prepare方法都做了什么事情?
+	   主要就是查看当前线程是否已经存在looper对象，如果没有，则创建一个looper对象，然后绑定到给当前线程。
+	   代码段如下：
+	   public static final void prepare() {  
+	       if (sThreadLocal.get() != null) {  
+	           throw new RuntimeException("Only one Looper may be created per thread");  
+	       }  
+	       sThreadLocal.set(new Looper());  
+       }
+
+       原文链接：https://blog.csdn.net/qq_43668118/article/details/86595523
 
    2） looper。loop是while（1）死循环，为什么主线程没有被耗死？handler是如何做到在指定的时间点做消息处理的？
        handler在创建的时候，会指定对应的looper，looper中有一个messagequeue消息队列，当队列中没有消息要处理的时候，处于阻塞状态，此时并不占用cpu。当有消息发送的时候，
@@ -243,6 +254,9 @@
    4） messageQueue中的消息，是基于什么进行排序的？
        是基于时间来进行排序，每次发送消息的时候，messagequeue得到消息后，会根据消息的时间把消息插入到指定的位置。这样就能保证每次取消息的时候，都能取到最前面的消息。
 	   
+   5)  同一个message(Message.obtain()),可不可以被调用sendMessage()两次?
+       不可以的.
+	   
 
 9、binder机制
    1） binder机理是什么？
@@ -255,7 +269,8 @@
        性能更好，只需要一次内存拷贝，
 	   更安全，系统底层做身份校验，再有就是应用级别的service是没有办法注册到servicemanager中的。具体哪些服务是在init。rc文件中注册的。可以这么理解安全这个问题. 因为
 	   没有办法篡改系统服务,  因为只有在底层配置文件init.rc中配置的服务才能被注册到ServiceManger中. 就保证服务的稳定性. 
-	
+	   
+	   主要可以对调用者的身份进行校验，我的服务只是给谁谁提供的，身份校验不通过，就不给提供服务。
 
 10、包体积优化
    使用lint检测无用资源
@@ -265,7 +280,16 @@
    resguard进行打包
    
 11、app加固的问题
+   1）app dex加固
+      a、从原始apk文件中获取到原始dex文件
+	  b、对原始dex文件进行加密，并将加密后的dex文件和相关的存放到assert目录中
+	  c、用脱壳dex文件替换原始apk文件里的dex文件。脱壳dex文件的作用主要有两个，一个是解密加密后dex文件，二是基于dexClassLoader动态加载解密后的dex文件
+	  d、因为原始apk文件已经被修改，需要删除原始apk的签名信息，即删除META-INF目录下的RSA、SF和MANIFEST.MF文件
+	  e、生成加固后的apk文件
+	  f、对加固后的apk文件进行签名，apk加固完成
 
+12、app签名
+    android应用以包名为唯一的标识，如果一个手机上安装两个包名相同的app，后者就会覆盖前面安装的应用，为了避免app被随意覆盖，安卓要求对app进行签名。
 
 12、android系统新特性
    1）各个版本的新特性：
@@ -624,6 +648,19 @@
    45）常见的AOP（面向切面编程）都有哪些？
 	   AspectJ
 	   Java Assistent
+	   动态代理
+	   
+   46）被final修饰的对象,初始化后,可不可以改变其中的属性值?
+       final修饰后,只是引用关系不能变更,但是其对应的属性值是可以修改的. 还有被final修饰的map和list,是可以被add和put的.
+	   
+   47）activity之间如何传递超过1M的大数据？
+       a、写入文件或SQLite数据库
+	   b、写入静态变量中
+	   
+	   备注：一般是通过intent绑定bundle来传递数据的
+	   
+	   
+   48）如何写一个类的hashCode方法？
    
    
 12、adb命令小结
@@ -989,8 +1026,24 @@
    3）方法区中的静态变量引用的对象
    4）本地方法区中JNI（即一般所说的native方法）引用的变量
    
+5、乐观锁和悲观锁
+   
+   
 
 5、java反射
+   1）什么是反射？
+      Java反射说的是在运行状态中，对于任何一个类，我们都能够知道这个类有哪些方法和属性。对于任何一个对象，我们都能够对它的方法和属性进行调用。我们把这种动态获取对象
+	  信息和调用对象方法的功能称之为反射机制。
+   2）实现方式？
+      a、
+	  b、
+	  c、根据类的全路径获取的对象。Class.forname("/com/test/test")
+	  
+   3）通过反射获取类的构造方法、方法和属性
+      a、构造方法 。getConstructors
+	  b、属性 。getFields
+	  c、方法。getMethod，然后通过invoke就可以调用该函数了
+	  
 
 6、java中的数据结构都有那些分类
   1）collection
@@ -1060,6 +1113,13 @@
 			 内层的判空的条件是非加不可的，如果不加的话， 两个线程同时走到synchronized那块，就会new出两个Singleton对象。
 		   b、为什么要添加volatile关键字？
 		     为了保证可见性和有序性
+			 
+	   c、单例模式的使用场景？
+	      需要频繁实例化然后销毁的对象
+		  创建对象耗时过多或耗资源过多，但又经常用到的对象
+		  有状态的工具类对象
+		  
+	      
    
    2）builder模式
      特点：提高代码的可读性。如：builder.age(32).name(“hack”).build();
@@ -1088,10 +1148,21 @@
    11）外观模式
        外观提供一套统一的接口， 用来访问子系统的。 
 	   范例：美团WMRouter中的Router类，定义一套接口， 调用的。
+	   
+   12))享元模式
+       主要是实现对象的共享, 即共享池.
+	   Message
+	   线程池
+	   连接池
 
 
 3、容易混淆的设计模式
    工厂模式和简单工厂模式，工厂方法模式，抽象工厂模式
+   代理模式和适配器模式
+       适配器模式:主要是对类做扩充, 当类有新的需求的情况下.
+	   代理模式:被代理的对象,需要找个委托, 不希望别人直接和被代理的对象直接关联.
+   
+   
 
 4、面向对象设计原则
    1）单一原则

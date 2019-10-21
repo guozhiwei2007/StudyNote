@@ -1,0 +1,157 @@
+各个厂商面试题总结：
+
+1、松果出行
+
+   1）代理模式和装饰者模式的区别?
+      代理模式:
+	  静态代理: 代理对象是确定的. 
+	  动态代理: 是通过反射来实现. 
+	  
+      顾名思义，装饰模式就是给一个对象增加一些新的功能，而且是动态的，要求装饰对象和被装饰对象实现同一个接口，装饰对象持有被装饰对象的实例。
+	  常见的就是aop面向切面编程的。
+	  
+	  桥接模式：就是将抽象和具体分离，使得二者可以独立变化.
+	  桥接模式和策略模式的区别?
+	  
+	  
+      
+	  
+   2）静态代理和动态模式的区别？
+      在aop中,静态代理表示在编译阶段就生成代码, 动态代理表示在运行阶段才生效。
+	  享元模式是实现对象的共享，即共享池。
+   
+   
+   3）如何实现一个高可复用性的app？
+      组件化，模块间解耦
+	  防止app包过大，引入插件化结构
+	  动态修复bug，引入热修复功能
+	  动态更新，引入react-native、h5运营动态更新
+	  引入abtest策略
+	  在线配置，要做主从配置（可以动态切换）， 某个线路失效后，要启动别的线路实现连接
+	  考虑跨进程交互等问题
+   
+   4）aop？
+      实现方式：
+	  AspectJ
+	  java assist
+	  动态代理
+	  
+      使用场景？
+	  全量自动化埋点
+	  登陆拦截
+	  时长统计
+	  
+   5）自定义gradle插件
+   
+   
+   4）aidl？
+      属于binder的一种实现方式。 
+	  跨进程间通讯，多个app间的数据共享
+	  进程报活
+	  push推送
+	  数据的实时上报，联想到听云和bugly，应该也是用到了aidl。
+   
+   5）https的单向校验， 双向校验是什么？
+   
+   6）https是如何防止抓包的？
+      target升级到26
+      判断手机是不是连接的代理， 如果是用的是代理，  就停止网络接口请求。 这个接口有个弊端， 就是当手机连接国外的代理或别的网络， 就会有问题， 用户体验太差。
+	  
+   7）抓包工具
+      fidder
+	  charles
+   
+   7）最近有没有做过分享？
+      hashmap
+	  WMRouter
+	  handler
+	    message消息复用， 属于享元模式， 防止内存抖动
+	  提问：handler你觉得最重要的几点是什么？
+	  
+	  Looper.prepare做了什么？
+	  
+	  message数据结构是什么？用到了什么设计模式？
+	  链表， 属于享元模式。 
+
+
+1、aups面试
+   1）聊了些过去的项目经历?
+   2）handler的延时处理是怎么做到的?
+   3）同一个message,可以发送两次吗?
+   4）线程安全的类都有哪些? 是怎么实现的?
+   5）volatile关键字的作用?
+   6）说一下binder原理?
+   7）应用起来后,按home键和back键生命周期函数回调有什么不同吗?
+   8）final修饰的对象的User之后,可不可以修改User类里面的某个字段?
+
+
+3、乐视金融（潘佳方）
+   1）handler的postmessage和postrunnable，两个都是通过handler处理此消息的。为什么一个走的是handleMessage，一个走的是runnable的run方法？
+      查看handler源码，处理消息时，有三层逻辑，首先走handler的callback逻辑， 其次走handler的callback逻辑，最后才会走handler的handlermessage逻辑。postRunable走的是
+	  message的callback逻辑。
+
+   2）系统sdk中已经存在Activity这个类，我们现在自定定义一个包名和sdk一样的类Activity。问能不能加载？
+      可以的。但是需要自定义classloader。
+
+   3）如何解决触摸冲突？现在有三层layout，最外层viewgroup A, 里面包含 ViewGroup B， 里面包含View c。 给三个view都设置了click时间，怎么实现， 让A、B、C分别拦截该click
+      时间。
+
+      补充，如果B强行拦截了事件，问事件怎么传递到了C？	  
+	  调用requestDisallowInterceptTouchEvent(true)，能阻止父布局拦截事件。
+
+
+   4）A-B->C->D，其中A为Normal， B为Single Task， C为Single Instance， D为Normal，请问执行了上述操作后， 栈结构变成什么样子了？
+
+	  |   |    |   |
+	  | D |    |   |
+	  | B |    |   |
+	  | A |    | C |
+
+      其中有个属性taskInficient属性。
+	  taskInficient
+
+   5）内存泄漏、内存溢出、内存越界的区别？
+      内存泄漏，对象使命完成，占用内存没有被回收
+	  内存溢出，内存不足，申请内存时没有足够的内存被返回，导致申请失败。
+	  内存越界，访问地址，到了有效地址区域之外。比如数组arr大小为2，直接访问arr[2]
+   6）
+   7）
+   
+4、微店
+   1）主要考察过往项目经历
+   2）考察一些热门技术， 插件化、热修复、 flutter等
+   
+   项目全部采用插件化框架。
+   
+5、今日头条面试
+   1）hashmap中，通过key值查找数据的时候，他是怎么判断链表上的那个元素是自己查找的？
+   2）在子线程中如何使用handler？
+   2）handler一般会引起内存泄漏，是由于他持有外部类的引用，那为什么handler没有被系统回收？
+   3）如何实现一个阻塞队列？
+   4）假如app在后台运行的时候，存在耗电状况，如何快速定位是哪快在耗费系统cpu资源？
+   5）如何判断app处于后台进程？
+   6）wmrouter的源码分析？
+   7）activity a启动activity b（b为single instance），当b退出时，调用setResult回传值的问题？
+   
+   
+   
+   ReentrantLock可重入锁和Synchronized的区别？
+   ReentrantLock需要自己手动上锁和解锁，所以操作起来复杂一些，但是更灵活一点。 synchronized关键字由于不需要考虑
+   
+   
+   如果map是一个concurrenthashmap，下面的代码有没有问题？
+   if(map.contails(key)) {
+     map.put(key, value);
+   }
+   
+   解决方案：是有的， 因为map上锁锁的是执行语句。 所以上述整个代码段并不是原子的。
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
