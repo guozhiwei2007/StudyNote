@@ -209,11 +209,14 @@
 		 通过集成腾讯bugly、听云等第三方sdk，收集线上bug，不断修复
 		 
    6）启动速度优化
+      启动速度时间耗费在一下几个方面
+	  application初始化， SplashActivity显示， 还有布局的初始化，
       方案：
 	      抽离不必要的业务逻辑，延迟加载
 		  在Application在启动子线程，做一些初始化，比如一些第三方sdk(推送sdk)的初始化等
 		  引入IdleHandler，在主线程的handler对应的Looper中的消息队列中没有消息的时候, 就会触发其回调函数, 可以在这个回调函数中执行一些操作
 		  尽量避免做IO操作，网络请求，abtest做SP缓存， 存在的情况下，就不做请求
+		  部分控件采用懒加载的方式，ViewStub标签，以及使用merge来减少view的层级（view绘制一般采用分层的方式一层一层的来绘制）
 		  
    备注:参考资料链接:https://www.jianshu.com/p/d71b51a0e29f
 
@@ -418,6 +421,8 @@
 	  要想并发程序正确的执行，必须保证原子性、可见性和有序性。
 	  synchronized和lock保证了原子性， volatile保证了有序性和可见性。volatile禁止指令重排，保证有序性。
 	  
+	  备注：32位的基本数据类型的读写操作是原子的，但是64位（long、double）的读写并不是原子的。
+	  
 	  transient关键字的作用：
 	  transient修饰的字段不会被序列化，比如一些敏感字段（银行卡账号和密码）不在网络中传输，只能被写入到内存中，不能被写入磁盘中持久化。
 
@@ -617,9 +622,19 @@
    44）当个activity的app是如何实现的？
    
    45）常见的AOP（面向切面编程）都有哪些？
-	   AspectJ
-	   Java Assistent
-   
+       apt
+	   AspectJ（适合在api的前面和后面插入一段代码，比如统计时长，全量埋点了等）
+	   Java Assistent（难度较大，不容易理解）
+	   
+	   AspectJ的缺点：
+	   1）不能引入第三方库
+	   2）不支持lambda表达式
+	   3）兼容性不好
+	   
+   46）内存泄漏、内存溢出，内存越界
+       内存泄漏表示对象长时间持有内存，导致内存没有办法释放
+	   内存溢出表示，申请内存失败。因为系统没有足够足够的内存来给你分配
+	   内存越界，比如一个数据大小为10， 你访问数组下标为10的元素，就抛出内存越界
    
 12、adb命令小结
    1）启动、停止adb服务
@@ -808,6 +823,8 @@
 		建一个assermanger对象， 通过它来获取插件中的resource资源。 这样我们在宿主程序中提供接口， 来获取插件中的resource资源。 宿主程序就能正常获取插件的resource资源了。
 
   3）除了利用反射这种方式外，还有哪些实现方式？
+     提供一套统一的接口，接口中包含activity的所有生命周期函数。 调用插件activity的时候，首先启动代理类，在代理类activity的生命周期中调用目标activity（实际上并不是真正的
+	 activity）对应的方法。
 
 3、kotlin
 
@@ -968,11 +985,10 @@
 	  缺/***xcxczasAr6 7 7 78 89 89088io sWD;dtp[p6点是内存有效利用率不高
 	  =[th6g[pgrerfrff;gghj
 	  kl;p'
-   3）标记-
-   整理算法
+   3）标记-整理算法
       当垃圾回收时，会把内存按照顺序合并在一起，把剩余的内存区域整体以此清除，效果最好哦。
 	  
-   备注：其中新生代采用复制算法，老年代采用标记-整理算法。
+   备注：其中新生代采用复制算法，老年代采用标记-整理算法。其中新生代中分为eden和survior两个区域，大小占比是8：1：1
          垃圾回收算法链接：https://blog.csdn.net/weixin_40739833/article/details/80717638
       
 4、如何判别一块内存区域可以被回收了？
@@ -988,6 +1004,20 @@
    
 
 5、java反射
+   1）应用场景
+      a、兼容新老sdk
+	  b、使用私有api（被@hide注解的api）
+	
+   2）9.0之后hide私有api不允许反射了？该怎么处理？？？
+	  实际上相当于把hide方法添加到了黑名单，应用级没有办法调用。hook条件点，让其绕过这个条件限制。达到不检测的目的。
+	
+   3）下面是反射用到的一些常用的api
+	  先获取Class
+	  通过调用Class。getDeclaredConstructor，获取Constructor
+	  获取Objcet，通过newInstance
+	  调用getDeclaredFiled，setField
+	  调用getDeclaredMethod，获取Method
+	  调用Method.invoke调用该方法
 
 6、java中的数据结构都有那些分类
   1）collection
@@ -1023,6 +1053,7 @@
 	   
 	   b、懒汉式实现单例类
 
+           静态内部类实现方式
 		   public final Singleton {
 				private Singleton {}
 				private static class SingletonHolder {
@@ -1033,6 +1064,7 @@
 				}
 			}
 
+            双重判空锁实现方式
 			public final Singleton { ／／final为了让这个类不能被继承，防止集成类修改singleton
 				private volatile static singleton = null;
 				private Singleton { ／／构造函数设置成private类型， 让外部不能调用构造函数产生实体类，只能通过调用getInstance方法来实现一个构造函数；；
@@ -1067,8 +1099,19 @@
 	 c、各种缓存cache策略
    5）代理模式
      范例：mediaplayer源码中的MediaPlayerProxy就是对AwesomePlayer的代理
-   6）工厂模式
+	 
+	 静态代理和动态代理的区别？静态代理如何实现？
+	 静态代理属于一对于的关系，每一个被代理的类，都需要实现一个对应的代理类。这样会产生很多的代理类。
+	 而动态代理只需要一个，即可代理很多类。统一调用代理类中的一个接口。用到了InvocationHandler接口和Proxy类。
+	 Proxy proxy = Porxy.newProxyInstance(ClassLoader loader, Class<?>[] interfaces , InvocationHandler h) ; //obj表示代理对象，interfaces表示obj的方法列表，loader表示类
+	 加载器
+	 InvocationHandler(Object obj)的构造函数中传入一个被代理对象的实例
+	 invoke(Object obj, Method method, Object{} arg) //obj表示被代理的对象， methhod表示出发的方法， arg表示方法参数
+	 
+   6）工厂方法模式
+      特点：一个工厂只创建一个产品，多一个产品就多一个工厂。
    7）简单工厂模式
+      一个工厂， 通过if else 方式生产所有的产品， 现在只要新增一种产品，就需要对工厂类做修改。不符合面向对象的开闭原则。
    8）状态模式
      范例：蓝牙源码中的状态机
    9）观察者模式，是一种一对多的设计模式，
@@ -1080,9 +1123,33 @@
 	 
    10）ioc控制反转模式
    
-   11）外观模式
+   11）外观模式（Facade pattern）
        外观提供一套统一的接口， 用来访问子系统的。 
 	   范例：美团WMRouter中的Router类，定义一套接口， 调用的。
+	   
+   12）适配器模式（adapter pattern）
+       日常生活中常见的适配器为，电源适配器，就是稳定输出的电源的
+	   
+	   A和B要通讯，但是A的输出，B并不能识别，所以需要中间创建一个适配器，适配成B能够识别的一种结构，生活中，比如A是一个美国人，B是一个中国人，A说英文，B说中文，所以他们之间
+	   不能够正常通讯，需要找个翻译。这个翻译就充当了这中间的适配器的作用。
+	   
+   14）组合模式
+       ViewGroup
+	   
+   15）装饰器模式（Decorator pattern）
+       允许在现有的类中添加新的功能，同时又不改变其结构， 面试的时候，容易和动态代理结合起来问。
+	   使用场景：在不想增加很多子类的情况下扩展类。
+	   
+	   装饰器模式关注于在一个对象上动态的添加方法，然而代理模式关注于控制对对象的访问。换句话说，用代理模式，代理类（proxy class）可以对它的客户隐藏一个对象的具体信息。
+	   因此，当使用代理模式的时候，我们常常在一个代理类中创建一个对象的实例。并且，当我们使用装饰器模式的时候，我们通常的做法是将原始对象作为一个参数传给装饰者的构造器。
+	   
+	   参考资料：https://www.cnblogs.com/xiaolovewei/p/7751332.html  讲解两种模式的区别
+	   
+   16）桥接模式（Bridge pattern）
+       有两个变化维度的系统，就可以用组合的模式
+	   
+	   比如有两种类型，一种是Pen，一种是Color， Pen类中持有Color类对象。 
+   
 
 
 3、容易混淆的设计模式
@@ -1301,7 +1368,7 @@
 	  多路流媒体信息， 二级中包括对应的流中包括多少个ts视频流信息；
 	  ts：表示对应的视频流地址。
 	  
-	  备注：一般情况，每个ts流的市场大概在10s左右。
+	  备注：一般情况，每个ts流的时长大概在10s左右。
    
 2、ffplay的线程模型是什么？
    解协议
@@ -1313,6 +1380,7 @@
 3、音视频同步怎么实现？
    方案：
    1）音频同步到视频
+      一般不采用这种方式
    
    2）视频同步到音频
       由于人耳对声音更敏感，另外声音的都是以固定频率进行播放。所以一般采用这种同步策略。 拿视频的pts和声音的pts进行比对。 如果滞后， 就跳帧。 如果超前， 就等待，重复
@@ -1337,6 +1405,13 @@
 
 1、二手车项目优化点
    1、 启动页做了优化， 延时加载， 就是通过这个idlehandler来实现的， 通过返回值等于false表示只执行一次， 返回true就表示可以无限次数的执行；
+       备注：如何测量启动时间
+	         1）命令行测量
+			    adb shell am start -W com.uxin.usedcar/com.uxin.usedcar.MainActivity
+				返回thistime：启动MainActivity的时间
+				    totaltime：启动所有activity的时间，如果没有SplashActivity，就和thistime一样
+					waittime：wms启动应用需要的时间
+			 2）埋点测量
    2、 首页数据做了缓冲，本地file和sp缓冲；
    3、 详情页做了预加载；
    4、 详情页做了接口拆分，领先接口和别的接口；
@@ -1382,12 +1457,21 @@
       解决方案：OKHttpClient。setSkipMemoryCache（true）
 	  裁剪图片尺寸，
 	  及时释放内存，
+	  
+   3、金融项目中用到了一个第三方的网络库sdk，由于只有项目的jar包，没有源代码，由于原有的扩展写的不是很好，导致后期在使用的过程中有很大的不便，怎么办？
+      采用反射的技术，对原有的sdk进行的功能扩充。
+	  
+   4、全量埋点？
+      采用aspectj切面编程的技术实现。某些类的某些个接口统一做埋点。
+	  备注：安卓全埋点解决方案 https://www.jianshu.com/p/dd253314ba6b
    
 3、其他
    1、push推送率不高
       oppo和vivo默认情况下，手机的推送开发是关闭的，需要添加白名单
 	  vivo推送的首条消息被系统智慧云消息给拦截，经沟通需要添加白名单
 	  小米、华为部分机型收到推送消息打不开，原因为收到消息内容为乱码
+	  
+	  
    
 
   
