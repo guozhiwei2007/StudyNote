@@ -635,6 +635,30 @@
        内存泄漏表示对象长时间持有内存，导致内存没有办法释放
 	   内存溢出表示，申请内存失败。因为系统没有足够足够的内存来给你分配
 	   内存越界，比如一个数据大小为10， 你访问数组下标为10的元素，就抛出内存越界
+
+   47）android多线程实现
+       ThreadPoolExecuator类来实现多线程，参数如下：
+	   coreThreadCount
+	   maxThreadCount
+	   workQueue
+	   说明，启动线程的数量小于coreThreadCount，都会启动一个实际的线程来执行任务
+	         启动线程的数量大于coreThreadCount，会把任务放到workQueue缓冲队列中
+			 启动线程的数量大于coreThreadCount，且队列已满的时候，会再起启动线程来执行任务
+			 启动线程的数量大于coureThreadCount，且队列已满，且达到最大线程数量时，会执行拒绝策略
+			 
+			 故，最大线程数和缓冲队列的大小设置非常关键，缓冲队列设置太大，就会导致线程数量得到限制，而且后续任务等待执行时间会很长。还得按照时间情况来设定。
+			 一般的策略，coreThreadCount和maxThreadCount一样，缓冲队列大小设置为无限大。
+			 
+   48）synchronized都可以给哪些添加？synchronized可以给类上吗？ synchronized给静态方法和非静态方法上的区别是什么？
+       synzhronized给静态方法上锁表示类锁
+       synchronized给非静态方法上锁表示对象锁
+	   synchronized(this)，是对象锁
+	   synchronized(AAA.class)，是类锁
+       针对对象锁，多个线程调用同一个对象的同步方法会阻塞，调用不同对象的同步方法不会阻塞。
+   
+       类锁和对象锁同时存在时，多线程同时访问，不会发生阻塞，因为他们不是一个锁
+   
+       参考链接：https://www.cnblogs.com/codebj/p/10994748.html
    
 12、adb命令小结
    1）启动、停止adb服务
@@ -982,9 +1006,8 @@
 	  
    2）复制算法
       内存区域分成两块相同的部分，开始的时候，只在其中的一块中申请内存，垃圾回收时，把该块的非垃圾内存按顺序拷贝到另外一块内存中，然后将该块内存整体擦除，效率较高。其
-	  缺/***xcxczasAr6 7 7 78 89 89088io sWD;dtp[p6点是内存有效利用率不高
-	  =[th6g[pgrerfrff;gghj
-	  kl;p'
+	  缺点是内存有效利用率不高
+
    3）标记-整理算法
       当垃圾回收时，会把内存按照顺序合并在一起，把剩余的内存区域整体以此清除，效果最好哦。
 	  
@@ -1109,7 +1132,7 @@
 	 invoke(Object obj, Method method, Object{} arg) //obj表示被代理的对象， methhod表示出发的方法， arg表示方法参数
 	 
    6）工厂方法模式
-      特点：一个工厂只创建一个产品，多一个产品就多一个工厂。
+      特点：一个工厂只创建一个产品，多一个产品就多一个工厂类。
    7）简单工厂模式
       一个工厂， 通过if else 方式生产所有的产品， 现在只要新增一种产品，就需要对工厂类做修改。不符合面向对象的开闭原则。
    8）状态模式
@@ -1352,6 +1375,41 @@
 
 7、二分查找
      a、变种问题，在一组有序的数组中，查找第一个值等于value的下标，第一个值大于等于value的下标，第一个值小于等于value值的下标？
+	 
+8、有一组数据，其中有一个数字只出现了一次，别的数字只出现了2次，实现一种算法，找出只出现一次的那个元素？
+   思路：局势异或运算符，就是任何数字异或它本身都等于0，比如数组是2，3，4，3，2。那运算就是2 xor 3 xor 4 xor 3 xor 2 <=> (2 xor 2 ) xor (3  xor 3) xor 4 = 4。
+   
+   异或运算表示对应位相同为0，不同为1.  任何数字和0做异或运算都等于它本身。
+   public int lookup(int []arr, int size, int value) {
+     int sum = 0;
+     for(int i = 0; i < size; i++) {
+	   sum ^= arr[i]
+	 }
+	 
+	 return sum;
+   }
+   
+9、有一组数字，其中有正数，也有负数， 实现一种算法，获得最大的子集？
+    #include<iostream.h>
+	#define N 5
+	int compare(int a[N]){
+	 int sum=0;
+	 int sub=0;
+	 for(int i=0;i<N;i++){
+	  if(sub<0)
+	   sub=a[i];
+	  else
+	   sub=sub+a[i];
+	  if(sum<sub)
+	   sum=sub;
+	 }
+	 return sum;
+	}
+	
+	void main(){
+	 int a[N]={-1,6,-1,2,-5};
+	 cout<<"最大子数组和为："<<compare(a)<<endl;
+	}
    
    
 七、视频
