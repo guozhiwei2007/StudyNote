@@ -1003,6 +1003,7 @@
    1）标记-清除算法
       a、效率低下（标记之后，每块都要清除）
 	  b、会产生大量的内存碎片
+	  备注：标记的强引用指向的内存区域（包括起始地址，长度）
 	  
    2）复制算法
       内存区域分成两块相同的部分，开始的时候，只在其中的一块中申请内存，垃圾回收时，把该块的非垃圾内存按顺序拷贝到另外一块内存中，然后将该块内存整体擦除，效率较高。其
@@ -1011,7 +1012,9 @@
    3）标记-整理算法
       当垃圾回收时，会把内存按照顺序合并在一起，把剩余的内存区域整体以此清除，效果最好哦。
 	  
-   备注：其中新生代采用复制算法，老年代采用标记-整理算法。其中新生代中分为eden和survior两个区域，大小占比是8：1：1
+      android采用什么垃圾回收策略，每个系统版本是不一样的。最开始是标记清除算法， 后来是复制算法，再到后来是标记整理算法。也是一个逐步升级的过程。
+	  
+   备注：分代回收策略，就是新生代采用复制算法，老年代采用标记-整理算法。其中新生代中分为eden和survior两个区域，大小占比是8：1：1
          垃圾回收算法链接：https://blog.csdn.net/weixin_40739833/article/details/80717638
       
 4、如何判别一块内存区域可以被回收了？
@@ -1410,8 +1413,42 @@
 	 int a[N]={-1,6,-1,2,-5};
 	 cout<<"最大子数组和为："<<compare(a)<<endl;
 	}
-   
-   
+	
+10、输入一串字符串"ABCBCADCBA"，输出"ABCD"?
+    public String printfStr(char[] input) {
+		StringBuilder output;
+		int tempArr[] = new int[26];
+	  
+		for(int i=0; i<input.size(); i++) {
+			int index = diff(input[i]);
+			if(0 == tempArr[index]) {
+			  output.append(input[i]+""));
+			} else {
+			  tempArr[index] += 1;
+			}
+		}
+		  
+		return output.toStr();
+	}
+
+	public int diff(char c) {
+	  return c-'A';
+	}
+	
+11、二叉树深度优先遍历
+    //递归实现
+    public void printfTree(NodeTree *tree) {
+	  if(tree != null) {
+	    printf(tree->value);
+	  }
+	  
+	  printfTree(tree->left);
+	  printfTree(tree->right);
+	}
+	
+12、二叉树广度优先遍历
+    
+	   
 七、视频
 1、协议层
    1）rtsp协议

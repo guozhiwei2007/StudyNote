@@ -1,0 +1,589 @@
+
+一、万读
+1、咨询之前做过的项目？
+   聊天室、push sdk集成、
+1、你所熟悉的排序算法都有哪些？
+   我回答的快速，询问了时间复杂度和空间复杂的
+   
+   
+   快排的时间复杂度是o（nlogn）
+   快排的空间复杂度是0（logn） 到n之间
+
+   快排的优点是高效，缺点是不够稳定（复杂度方面）
+   
+   
+2、java内存管理机制
+   主内存和工作内存（主要是为了提高效率，内存读取速度和cpu执行速度之间有代差），多线程操作，容易出现问题。需要保证可见性、有序性和原子性。
+
+
+3、static关键字的作用
+   生命周期：和应用进程的生命周期一样
+   static修饰的方法，可以用类直接调用
+   普通类是不允许被static修饰的，只有内部类才可以被static修饰，static内部静态类不持有外部类的引用
+   static修饰的代码块
+   
+   
+4、用户名和密码实在客户端做的加密还是在服务端做的加密？
+
+5、给了一串数字，其中只有一个数字出现了一次，别的都出现了两次，实现一种算法，找出只出现了一次的这个数字。
+   
+   
+
+伴鱼
+1、如何判断一个应用处于后台状态？
+   registerActivityLifecycleCallbacks监听生命周期方法
+
+2、hashmap当链表过长时，如何优化查找速度？主要考察红黑树？
+
+
+3、activity的生命周期onCreate中调用setConttentView函数主要做了什么事情？
+
+
+4、handle的mcallback方法的handlemessage方法返回true和false各自都做了哪些操作？
+
+
+5、做插件化时，多个插件中有重复资源文件时，怎么办？
+   https://blog.csdn.net/huangjijie123456/article/details/51107985
+   https://cloud.tencent.com/developer/article/1514102
+   
+
+
+6、考察touch事件。问题是外面一个list，其中每一项item中有一个button按钮，当我按下按钮，并且滑动时候，事件是怎么传递的？
+   会先走到button的onTouchEvent事件，DOWN事件会被button执行，但MOVE事件来了之后，被listview拦截，listview做上下滑动，最后到UP事件。执行完之后，会向button发一个Cancel事件。
+   告诉button，move和up事件已经被我执行完毕了。你可以做取消操作了。 
+   
+
+7、？extend语法的考察？问题如下？
+   ArrayList<? extent Object> list = new ArrayList<>();
+   list.add("a");
+   Sytem.out.println(list.get(0));
+   答案是会报错，list没有办法接收这种类型。
+   
+   Java编译器会阻止对声明类型为List<? extend T>的集合的add操作；会阻止对声明类型为List<? super T>的集合的get操作。代码范例如下：
+   ArrayList<C> al = new ArrayList<C>();
+        al.add(new C());
+        List<? extends A> list = al;
+//        list不允许加入任何元素
+//        list.add(new A());
+//        list.add(new B());
+//        list.add(new C());
+//        list可以获取元素，但是接受元素必须是A，是其他的会报错！
+        A a1 = list.get(0);
+//        C c1 = list.get(0); 不可用C接受
+
+
+        List<? super C> list1 = new ArrayList<B>();
+//        list不允许加入C的父类元素
+//        list1.add(new A());
+//        list1.add(new B());
+        list1.add(new C()); //可以添加C和C的子类
+//        list获取元素需要强制类型转换（或用Object接受），因为类信息使用list会被丢失
+//        C c2 = list1.get(0);
+        C c2 = (C)list1.get(0);
+————————————————
+     原文链接：https://blog.csdn.net/Justin_zhao/article/details/77750440
+	 
+8、有一组数据，其中有一个数字只出现了一次，别的数字只出现了2次，实现一种算法，找出只出现一次的那个元素？
+   思路：局势异或运算符，就是任何数字异或它本身都等于0，比如数组是2，3，4，3，2。那运算就是2 xor 3 xor 4 xor 3 xor 2 <=> (2 xor 2 ) xor (3  xor 3) xor 4 = 4。
+   
+   异或运算表示对应位相同为0，不同为1.  任何数字和0做异或运算都等于它本身。
+   public int lookup(int []arr, int size, int value) {
+     int sum = 0;
+     for(int i = 0; i < size; i++) {
+	   sum ^= arr[i]
+	 }
+	 
+	 return sum;
+   }
+   
+10、动态代理InvocationHandler的invoke方法中的三个参数分别表示什么？还有一个Proxy.newInstanceProxy方法中的参数分别表示什么？
+   参考文档： https://blog.csdn.net/Dream_Weave/article/details/84183247
+
+
+17、问到了线程池的概念？corethreadsize， maxthreadsize，
+
+
+18、有一组数字，其中有正数，也有负数， 实现一种算法，获得最大的子集？
+    #include<iostream.h>
+	#define N 5
+	int compare(int a[N]){
+	 int sum=0;
+	 int sub=0;
+	 for(int i=0;i<N;i++){
+	  if(sub<0)
+	   sub=a[i];
+	  else
+	   sub=sub+a[i];
+	  if(sum<sub)
+	   sum=sub;
+	 }
+	 return sum;
+	}
+	
+	void main(){
+	 int a[N]={-1,6,-1,2,-5};
+	 cout<<"最大子数组和为："<<compare(a)<<endl;
+	}
+
+19、线程池threadpoolexecuter各个参数详解？
+    参考链接：https://blog.csdn.net/jubaoquan/article/details/79198780
+	
+	threadpoolexecuate(int coreThreadcount, int maxThreadCount, Queue queue)
+	核心线程数表示开始最大可以启动的线程，如果后续还有线程要启动，就塞进队列里面，如果队列满了，就在能接受maxthreadcount-corethreadcount个线程。
+   
+14、android内置的android.utils.LruCache删除元素的那个方法是错误的，正常是删除第一个数据，然而他是删除最后一个的。所以得用support.v4包中的那个才是正确的。
+
+15、初始化linkedhashmap时，有两个参数，最后一个参数为true表示每次访问数据后，都要把数据移动到尾部。
+
+
+16、java反射技术的使用场景
+    1）兼容新老sdk
+	2）使用私有api（被@hide注解的api）
+	
+	9.0之后hide私有方法不允许反射了？该怎么处理？
+	
+	下面是反射用到的一些常用的api
+	先获取Class
+	通过调用Class。getDeclaredConstructor，获取Constructor
+	获取Objcet，通过newInstance
+	调用getDeclaredFiled，setField
+	调用getDeclaredMethod，获取Method
+	调用Method.invoke调用该方法
+	
+17、
+
+三、完美世界
+1、单例模式的实现方式都有哪些，问到了懒加载和饿加载？
+
+
+2、java原子操作的类都有哪些？
+   原子更新基本操作类，atomicboolean。atomicinteger。atmiclong
+
+
+3、synchronized都可以给哪些添加？synchronized可以给类上吗？ synchronized给静态方法和非静态方法上的区别是什么？
+   synzhronized给静态方法上锁表示类锁
+   synchronized给非静态方法上锁表示对象锁
+   多个线程调用同一个对象的同步方法会阻塞，调用不同对象的同步方法不会阻塞。
+   
+   类锁和对象锁同时存在时，多线程同时访问，不会发生阻塞，因为他们不是一个锁
+   
+   参考链接：https://www.cnblogs.com/codebj/p/10994748.html
+
+
+4、rxjava有几种线程类型？
+   newThread()：一个新线程
+   io()：异步IO线程
+   computation()：计算密集型线程
+   还有一个Android中主线程（UI线程）
+   AndroidSchedulers.mainThread()
+
+
+5、jvm的结构是什么？string字符串是位于什么区
+   堆区、栈区、静态存储区、方法区、本地方法区、程序计数器
+   string属于常量，位于常量池，即静态存储区
+
+6、android系统中用到了哪些设计模式？都在那里用到了？
+   观察者模式  broadcast  listener
+   适配器模式  各种adapter
+   简单工厂模式：Mediaplayer中的适配器
+   责任链模式：okhttp的拦截器
+   享元模式：MessageQueue中的Message
+   单例模式：ams的代理对象activitymanagenative.gdefault(activityManagerProxy)
+   builder模式：okhttpclient
+   外观模式：mediaplayer从java层到c++层统一接口
+   组合模式：viewgroup
+
+7、View的长按事件是怎么实现的？cancel事件什么时候会触发？
+
+
+9、http都有哪些返回码？
+
+
+10、singletash和singleisntance的区别
+
+
+11、java中有几种引用方式？
+    强引用、软引用、弱引用和虚引用
+
+
+12、网络库都有哪些？ 图片库都有哪些？
+
+
+13、序列化实现方式都有哪几种？ 
+
+    实现serializable或parcelable，parcelable性能好，serilizable， Serial兼容了serizlizale和parcelable的优点，性能更好点。
+	
+    如何把序列化完的二进制文件写入文件？
+	
+	序列化：ObjectOutputStream，FileOutputStream作为参数，然后writeObject写文件
+	反序列化：ObjectInputStream，FileInputStream作为参数，然后readObject读文件
+	
+
+14、hashmap的数据结构，以及1.6之后，对hashmap做了哪些优化？
+
+
+15、除了xml和json，还有序列化方式
+    protocol buffer（pb），性能更强，但是实现起来更复杂一点。维护成本较高。
+    
+
+
+16、IntentService是个什么？
+    他有自己的Thread和Handler
+
+
+17、android应用如何实现多进程，如何判断当前进程是主进程？
+    在AndroidManifest。xml文件中添加process属性即可。比如启动某个service，让他处于另一个进程中。
+    方法1：获取当前进程的pid，
+	       根据pid获取当前进程的processname
+		   然后判断processname是不是和包名一致
+		   
+	方法2：判断Looper。mylooper是不是等于Looper。getmainLooper，一致则说明一样，不一致则说明不一样。
+	
+	
+18、
+
+
+
+Meta App面试
+1、算法
+实现一种算法，输入字符串"AABBCCABCDDC"，输出ABCD
+public String printfStr(char[] input) {
+  StringBuilder output;
+  int tempArr[] = new int[26];
+  
+  for(int i=0; i<input.size(); i++) {
+    int index = diff(input[i]);
+    if(0 == tempArr[index]) {
+	  
+	} else {
+	  tempArr[index] += 1;
+	}
+	
+	if(tempArr[index] == 0) {
+	  output.append(input[i]+""));
+	}
+  }
+  
+  return output.toStr();
+}
+
+public int diff(char c) {
+  return c-'A';
+}
+
+
+镁佳
+
+1、static关键字的作用？
+
+2、一个数组保存了一连串的数字， 规律按照先升序后降序的方式排列。 然后输入一个value，找出其在数组中的下标。找不到返回-1. （备注：连着的两个数字不相等）
+解析：核心关键点在于如何查找中间的那个数字。 通过二分查找分析， 有三种情况：
+      1）mid值在左边升序中，
+	  2）mid值在右边降序中，
+	  3）mid值就是最大值。
+
+
+private int mid = -1;
+public void getmax（int[] arr， int start ， int end） {
+   int mid = start+ (end-start) >>1;
+   if(arr[mid] > arr[mid-1] && arr[mid] > arr[mid+1]) {
+     middle = mid;
+     return ;
+   } else if( arr[mid] > arr[mid-1} && arr[mid] < arr[mid+1]){  //中间数命中左边升序
+     getmax(arr, mid+1, end);
+   } else {  //中间数命中右边降序
+     getmax(arr, start, mid-1);
+   }
+   
+   return ;
+}
+
+public int get(arr, int start, int end, int value) {
+  int result = binarySearch(arr, start, mid, value, true);
+  if(result != -1) {
+    result = binarySearch(arr, mid, end, value, false);
+  }
+  return result;
+}
+
+public int binarySearch(int []arr, int start, int end, int value, boolean op) {
+  if(op) {  //左边升序
+  
+  } else {  //右边降序
+  
+  }
+}
+
+
+3、有一组string， 按照字母的先后顺序输出？
+publc int ascii(char c) {
+ return c-'a';
+}
+
+public char asciiToChar(int asc) {
+  char c = 'a' + asc;
+  return c;
+}
+
+public void sort(char[] arr) {
+  StringBuild sb = new StringBuild();
+  int []arr_index = new int[26];
+  int len = arr.length;
+  for(int i = 0; i < len, i++) {
+    arr_index[ascii(arr[i])] += 1;
+  }
+  
+  for(int j = 0; j < arr_index.length; j++) {
+    int count = arr_index[j];
+	
+	while(count > 0) {
+	  sb.append(asciiToChar(j)+"");
+	  count--;
+	}
+  
+  }
+  
+  return sb.toString();
+}
+
+4、实现一个生产者和消费者模型？
+
+class Queue {
+  int size; //表示队列容器有多大
+  int count; //表示队列当前有多少个数据
+}
+
+class Factory {
+  private static Queue queue = new Queue();
+  private Object obj = new Object（）；
+  
+  public static Queue create() {
+    return queue;
+  }
+}
+
+class Product {
+
+   public void put(Queue queue, Node node) {
+   
+     synchronize（Facoty.obj） {
+	   if(count < size ) {
+	     queue.put(node);
+		 count+=1；
+		 Factory.obj.notify();
+	   } else {
+	     do {
+		   Factory.obj.wait();
+		   if(count < size) {
+		     queue.put(node);
+			 count+=1;
+			 Factory.obj.notify();
+		   }
+		 }while(count >= size);
+	   }
+	 }
+   }
+}
+
+
+class Consumer {
+
+ public Node get(Queue queue) {
+   synchronized(Factory.obj) {
+     if(count > 0) {
+	  node =  queue.get();
+	  count-=1;
+	  Factory.obj.notify();
+	 } else {
+	  do{
+	   Factory.obj.wait();
+	   
+	   if(count > 0) {
+	     node =  queue.get();
+		 count-=1;
+		 Factory.obj.notify();
+	   }
+	  }while(count <= 0);
+	 
+	 }
+	 
+	 return node;
+   }
+ }
+}
+
+
+4、现在要实现一个邮件系统，其中有很多属性，其中就包括sender、receiver，主题，等等很多，让你设计的化， 你将如何来设计这个系统（会有很多判断条件）。
+
+
+
+车主帮
+
+1、如何进行包体积优化？
+
+   相同图片的处理？
+      因为图片本身占用内存比较大，所以通过获取图片的是hashcode， 根据hashcode是不是一致， 来判断有没有相同的图片。
+	  数据结构采用hashmap， key是hashcode， value保存图片的路径。 
+	      优化点， 比较时，第一次比较只是通过获取图片的部分信息，做hash运算，得到hash值，如果发现有冲突，可以拿整张图片的信息做hash运算。 再做比较。
+		  
+   无用图片的处理？
+      因为所有的图片资源,都会存储再R.java文件中. R.java中默认有attr\ layout\ drawable和string内部类. 其中存储的是文件的索引信息.方便查找图片使用的. dex反编译后的代码中,是不
+	  是存放的就是图片的索引.
+
+2、卡断优化？
+   如何检测有没有卡顿
+   
+   方案1:handler的方式, 通过不停的往handler里面push消息, 因为每个消息, 都有when字段, 表示执行时间. 
+   
+   利用UI线程的Looper打印的日志匹配
+   使用Choreographer.FrameCallback
+   Choreographer.getInstance().postFrameCallback() {
+   };
+   
+   思路:先获取卡断时间点,然后获取卡断堆栈信息. 如果我们在卡断的时候,才去抓取堆栈信息的话, 可能导致抓到的堆栈信息不准确. 因为发生卡断是一个过程, 所以采用高频采集的方案,在每
+   次采集前,就开始采集, 到下才采集时,先判断有没有发生卡顿,如果发生了, 就把内存信息,保存到文件中.
+   
+3\如何检测内存泄漏?
+
+  
+
+
+4\热修复都有哪些方案
+
+
+
+5\插件化都有哪些方案
+  hook instrument
+  
+  2通过接口的形式
+  
+  3 hook ams
+  
+6\如何实现检测activity有内存泄漏?
+  启动activity, 肯定就会有activity的引用, 当我activity退出的时候, 引用关系如果还存在的化,就说明activity有内存泄漏. LeakCannary就是这么实现的.
+  
+  
+4\dex文件的结构
+010Editor查看dex文件
+
+Header
+
+7\屏障消息
+
+Message分为同步消息, 屏障消息, 异步消息,  
+屏障消息有如下特点:
+异步消息, 可以通过Message.setAsynronized(true)来设置. 
+没有target对象, Looper在取消息的时候, 如果碰到了屏障消息, 就会从当前消息开始找最近的异步消息, 来执行.
+
+postSyncBarrier()插入屏障消息
+removeSyncBarrier()移除屏障消息
+但是插入和移除这两个方法是私有方法, 需要通过反射来获取.
+
+https://blog.csdn.net/start_mao/article/details/98963744
+
+
+
+玩吧面试
+
+1、你画我猜这个游戏让你设计你会怎么做？
+   一个聊天室有一个主播， 其他的用户都可以看作是他的粉丝。当主播绘画的时候，聊天室内的所有粉丝都可以实时看到主播的绘画。自己的实现思路就是主播在画的时候，根据touch事件把x，
+   y坐标上传到服务器，服务器在把坐标数据实时下发到整个聊天室的用户。
+   
+   
+2、有三个线程，实现让三个线程循环一次打印0，1，2，3。。。，，并怎么实现扩充功能， 实现有N个线程同时在做这件事情。
+
+3、现在两个鸡蛋， 又100层楼， 让你实现一种算法， 获取鸡蛋最大能承受从几楼扔下来还不碎。
+   实现思路：1，2，3，4，5，6.。。 和等于100
+
+4、okhttp拦截器是如何实现的？
+
+5、你们app的架构是什么？
+   组件化架构， 组件化架构主要解决了模块间的解耦。 然后就是模块的拆分。 我们是按照业务和功能点来进行拆分的。
+
+6、针对多平台的差异化，怎么做？？ 比如我们的
+
+7、优点、缺点
+
+
+8、评价你们团队的成员，有何优点、缺点
+
+9、android自有的一些数据结构，比如spaseArray和Arraymap，说一下他们的特点：
+   arraymap数据结构是两个数组，一个存储key，一个存储value。 他要比hashmap更节省内存，就是他没有内存浪费。 hashmap有个扩容因子，默认是0.75，所以当存储的数据量达到总容量的
+   0.75倍的时候，就会触发扩容机制。而arraymap，是通过一个数组存储key的hashcode值的（这个是有序的）， 一个数组来存储key-value键值对的。其中偶数位存储key， 基数位存储value。
+   比如在index出存储了key的hashcode， 则在index<<1出存储key， 在index<<1+1处存储value。 所以就是说，加入又m个节点， 就需要有3m个节点空间。
+   
+   
+   传入一个key值如何查找呢？ 通过key值获取到对应的hashcode， 然后对前m个数据进行二分查找，找到对应的索引下标。这样就表示已经找到了。 
+   
+10、app启动优化
+   一般指冷启动优化
+
+
+11、activity是如何启动的？
+
+
+12、浅要谈一下handler？
+
+
+13、rxjava+retrofit一次（合并）请求多个接口，使用merge关键字。
+    @Override
+    public void getPlaceAndWeatherData(String place) {
+        mMainView.showProgress();
+        PlaceRepository repository = new PlaceRepository();
+        Context context = BaseApplication.getInstance();
+        Observable placeObservable = repository.getPlaceList(context);
+        Observable weatherObservable =  ServiceManager.getInstance().getApiService().getWeatherInfo(place, Constants.BAIDU_AK);
+        Observable.merge(placeObservable, weatherObservable)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Object>() {
+                    @Override
+                    public void onCompleted() {
+                        mMainView.hideProgress();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mLogger.error(e.getMessage(), e);
+                        mMainView.hideProgress();
+                    }
+
+                    @Override
+                    public void onNext(Object obj) {
+                        if (obj instanceof List) {
+                            mMainView.setupPlaceData((List<Place>) obj);
+                        } else if (obj instanceof WeatherResponse) {
+                            mMainView.setupWeatherData((WeatherResponse) obj);
+                        }
+                    }
+                });
+    }
+	
+    原文链接：https://blog.csdn.net/jdsjlzx/article/details/51464913
+
+
+   
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
