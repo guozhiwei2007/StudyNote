@@ -508,15 +508,15 @@ https://blog.csdn.net/start_mao/article/details/98963744
 8、评价你们团队的成员，有何优点、缺点
 
 9、android自有的一些数据结构，比如spaseArray和Arraymap，说一下他们的特点：
-   arraymap数据结构是两个数组，一个存储key，一个存储value。 他要比hashmap更节省内存，就是他没有内存浪费。 hashmap有个扩容因子，默认是0.75，所以当存储的数据量达到总容量的
+   arraymap要比hashmap更节省内存，就是他没有内存浪费。 hashmap有个扩容因子，默认是0.75，所以当存储的数据量达到总容量的
    0.75倍的时候，就会触发扩容机制。而arraymap，是通过一个数组存储key的hashcode值的（这个是有序的）， 一个数组来存储key-value键值对的。其中偶数位存储key， 基数位存储value。
    比如在index出存储了key的hashcode， 则在index<<1出存储key， 在index<<1+1处存储value。 所以就是说，加入又m个节点， 就需要有3m个节点空间。
-   
-   
-   传入一个key值如何查找呢？ 通过key值获取到对应的hashcode， 然后对前m个数据进行二分查找，找到对应的索引下标。这样就表示已经找到了。 
-   
+
+
+   传入一个key值如何查找呢？在存储hashcode的数组中通过二分查找找到这个key对应的hashcode的下标index， 然后在存储key-value的数组中下标2*index， 2*index+1的位置获取到key和value
+
 10、app启动优化
-   一般指冷启动优化
+   一般指冷启动优化，冷启动过程中都做了那些事？
 
 
 11、activity是如何启动的？
